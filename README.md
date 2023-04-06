@@ -1,11 +1,11 @@
 # Hi, I'm Woojin Go (wjgoarxiv) 👋
 
 <!-- Tags for buttons -->
-<p align="center">
+<p align="left">
 <a href="https://git.io/typing-svg" style="display: block;">
-		<img src="https://readme-typing-svg.demolab.com?font=Helvetica&weight=1000&duration=1000&pause=200&color=AE7AE4&background=FF000000&center=true&vCenter=true&multiline=true&width=600&height=80&lines=Woojin+Go;Ph.D. candidate+%7C+Researcher" alt="Typing SVG" style="max-width: 100%; height: auto; width: auto\9; /* IE8 */ "/>
+    <img src="https://readme-typing-svg.demolab.com?font=Helvetica&weight=1000&duration=1000&pause=200&color=AE7AE4&background=FF000000&center=true&vCenter=true&multiline=true&width=600&height=80&lines=Woojin+Go;Ph.D. candidate+%7C+Researcher" alt="Typing SVG" style="max-width: 100%; height: auto; width: auto\9; /* IE8 */ "/>
 </a>
-  
+<br/>
 <a href="https://woojingo.site">
     <img src="https://img.shields.io/badge/Homepage-woojingo.site-purple?style=square">
 </a>  
@@ -21,6 +21,7 @@
 <a href="https://pypi.org/user/wjgo/">
     <img src="https://img.shields.io/badge/PyPi-wjgo-blue?style=square&logo=pypi&logoColor=white">
 </a>
+<br/>
 <a href="https://github.com/wjgoarxiv/">
     <img src="https://img.shields.io/badge/Github-wjgoarxiv-white?style=square&logo=github&logoColor=white">
 </a>
@@ -35,7 +36,8 @@
 
 <!-- End of Tags for buttons -->
 
-안녕하세요, 고우진입니다! <br> I'm a passionate graduate student from South Korea, focusing on gas hydrate and its applications through experimental and computational approaches.
+안녕하세요, 고우진입니다! <br> I'm a passionate graduate student from South Korea, <br/>
+focusing on gas hydrate and its applications through experimental and computational approaches.
 <br/>
 
 ## 🎓 Education
@@ -85,7 +87,7 @@
 ## 📜 Certificates
 
 - [Notion Essentials Badge](https://www.credly.com/badges/4e8b2308-ef93-4850-9ea2-e0e2cc4eb940/public_url) <br/>
-<img src = "https://images.credly.com/images/26505d2d-307c-4e2f-a621-21a6bc24280e/image.png" style="width: 150px; height:auto;">
+<img src = "https://images.credly.com/images/26505d2d-307c-4e2f-a621-21a6bc24280e/image.png" style="width: 100px; height:auto;">
 
 ## 📫 Connect With Me
 - [Homepage](https://woojingo.site/)
