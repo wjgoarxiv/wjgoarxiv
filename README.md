@@ -7,29 +7,29 @@
 </a>
 <br/>
 <a href="https://woojingo.site">
-    <img src="https://img.shields.io/badge/Homepage-woojingo.site-purple?style=square">
+    <img src="https://img.shields.io/badge/Homepage-woojingo.site-b2b2b2?style=square&logoColor=black">
 </a>  
 <a href="https://www.linkedin.com/in/woojingo/">
-    <img src="https://img.shields.io/badge/-Linkedin-blue?style=square&logo=linkedin">
+    <img src="https://img.shields.io/badge/-Linkedin-b2b2b2?style=square&logo=linkedin&logoColor=white">
 </a>
 <a href="mailto:woo_go@yahoo.com">
-    <img src="https://img.shields.io/badge/Email-black?style=square&logo=yahoo&logoColor=white">
+    <img src="https://img.shields.io/badge/Email-b2b2b2?style=square&logo=yahoo&logoColor=white">
 </a>                                                                                      
 <a href="https://scholar.google.com/citations?user=V95iNggAAAAJ&hl=ko" target="_blank">
-    <img src="https://img.shields.io/badge/Scholar-100000?style=flat&logo=GoogleScholar&logoColor=white&&color=0181FF">
+    <img src="https://img.shields.io/badge/Scholar-100000?style=square&logo=GoogleScholar&logoColor=white&&color=b2b2b2">
 </a>
 <a href="https://pypi.org/user/wjgo/">
-    <img src="https://img.shields.io/badge/PyPi-wjgo-blue?style=square&logo=pypi&logoColor=white">
+    <img src="https://img.shields.io/badge/PyPi-wjgo-b2b2b2?style=square&logo=pypi&logoColor=white">
 </a>
 <br/>
 <a href="https://github.com/wjgoarxiv/">
-    <img src="https://img.shields.io/badge/Github-wjgoarxiv-white?style=square&logo=github&logoColor=white">
+    <img src="https://img.shields.io/badge/Github-wjgoarxiv-b2b2b2?style=square&logo=github&logoColor=white">
 </a>
 <a href="https://www.buymeacoffee.com/woojingo/">
-		<img src="https://img.shields.io/badge/BuyMeACoffee-woojingo-brown?style=square&logo=buymeacoffee&logoColor=brown">
+		<img src="https://img.shields.io/badge/BuyMeACoffee-woojingo-b2b2b2?style=square&logo=buymeacoffee&logoColor=white">
 </a>
 <a href="https://www.researchgate.net/profile/Woojin-Go">
-		<img src="https://img.shields.io/badge/ResearchGate-woojingo-cyan?style=square&logo=researchgate&logoColor=cyan">
+		<img src="https://img.shields.io/badge/ResearchGate-woojingo-b2b2b2?style=square&logo=researchgate&logoColor=white">
 </a>
 <br/>
 </p>
