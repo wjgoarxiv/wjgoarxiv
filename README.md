@@ -3,7 +3,7 @@
 <!-- Tags for buttons -->
 <p align="left">
 <a href="https://git.io/typing-svg" style="display: block;">
-    <img src="https://readme-typing-svg.demolab.com?font=Helvetica&weight=1000&duration=1000&pause=200&color=AE7AE4&background=FF000000&center=true&vCenter=true&multiline=true&width=600&height=80&lines=Woojin+Go;Ph.D. candidate+%7C+Researcher" alt="Typing SVG" style="max-width: 100%; height: auto; width: auto\9; /* IE8 */ "/>
+    <img src="https://readme-typing-svg.demolab.com?font=Helvetica&weight=800&duration=1000&pause=200&color=4c4c4c&background=FF000000&center=true&vCenter=true&multiline=true&width=480&height=80&lines=Woojin+Go;Ph.D. candidate+%7C+Researcher" alt="Typing SVG" style="max-width: 100%; height: auto; width: auto\9; /* IE8 */ "/>
 </a>
 <br/>
 <a href="https://woojingo.site">
