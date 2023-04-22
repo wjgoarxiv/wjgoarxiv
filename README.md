@@ -60,30 +60,6 @@ focusing on gas hydrate and its applications through experimental and computatio
 - Teaching Assistant for Environmental Thermodynamics (Mar. 2022 - June 2022), UNIST
 - Teaching Assistant for General Chemistry (Aug. 2016 - June 2017), UNIST
 
-## 🔬 Skills
-
-### Experimental
-
-- Phase Equilibria measurements
-- High-pressure micro-differential scanning calorimeter (HP μ-DSC)
-- High-pressure rheometer (HP rheometer) for gas hydrate physical properties
-
-### Computational
-- Molecular dynamics (MD) simulations using *LAMMPS, GROMACS*, etc.
-- Atoms-In-Molecules (AIM) & density functional theory (DFT) calculations with *Gaussian*
-
-### Coding
-
-- Python
-- Graph designs with *Matplotlib, Seaborn, Plotly, Mpld3*
-- Website designing
-
-### Artworks & Designs
-
-- 3D visualization of molecules with *OVITO and VMD*
-- Vector illustration using *Adobe Illustrator, Procreate, Vectornator, and Figma*
-- Audio processing & mastering with *FL Studio*
-
 ## 📜 Certificates
 
 - [Notion Essentials Badge](https://www.credly.com/badges/4e8b2308-ef93-4850-9ea2-e0e2cc4eb940/public_url) <br/>
