@@ -35,19 +35,6 @@
     - *Thesis: Experimental and Computational Approaches for Delving into Effective and Eco-friendly Gas Hydrate Inhibitors for Flow Assurance
     (Advisor: Prof. Yongwon Seo)*
 - **B.S.**, 2014 – 2018, School of Energy and Chemical Engineering, UNIST
-  
-## Honors and Awards
-- **The Best Paper Awards**, The Korean Institute of Chemical Engineers, Oct. 26th, 2018
-- **The Best Paper Awards**, The Korean Society for New and Renewable Energy, Dec. 27th, 2018
-- **Excellent Oral Presentation Awards**, The Korean Institute of Chemical Engineers, Nov. 11th, 2022
-
-## Teaching Experience
-- Teaching Assistant, Environmental Thermodynamics, UNIST, March 2022 - June 2022
-- Teaching Assistant, General Chemistry, UNIST, August 2016 - June 2017
-
-## Certificates
-- [Notion Essentials Badge](https://www.credly.com/badges/4e8b2308-ef93-4850-9ea2-e0e2cc4eb940/public_url) <br/>
-<img src = "https://images.credly.com/images/26505d2d-307c-4e2f-a621-21a6bc24280e/image.png" style="width: 100px; height:auto;">
 
 ## 📫 Connect With Me
 - [Homepage](https://woojingo.site/)
