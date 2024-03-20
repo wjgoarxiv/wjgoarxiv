@@ -2,8 +2,8 @@
 
 <!-- Tags for buttons -->
 <p style="color: #e3e3e3; padding: 10px;">
-    <a href="https://woojingo.site" style="text-decoration: none; color: #e3e3e3;">
-        <img src="https://img.shields.io/badge/Homepage-woojingo.site-e3e3e3?style=square&logoColor=black">
+    <a href="https://woojingo.notion.site" style="text-decoration: none; color: #e3e3e3;">
+        <img src="https://img.shields.io/badge/Homepage-woojingo.notion.site-e3e3e3?style=square&logoColor=black">
     </a>  
     <a href="https://www.linkedin.com/in/woojingo/" style="text-decoration: none; color: #e3e3e3;">
         <img src="https://img.shields.io/badge/-Linkedin-e3e3e3?style=square&logo=linkedin&logoColor=424242">
