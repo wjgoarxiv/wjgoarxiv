@@ -37,6 +37,6 @@
 - **B.S.**, 2014 – 2018, School of Energy and Chemical Engineering, UNIST
 
 ## 📫 Connect With Me
-- [Homepage](https://woojingo.site/)
+- [Homepage](https://woojingo.notion.site/)
 - [LinkedIn](https://www.linkedin.com/in/woojingo/)
 - [GitHub](https://github.com/wjgoarxiv)
