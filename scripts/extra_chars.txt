@@ -1,0 +1,4 @@
+# Hangul used on the profile: name plus status labels.
+고우진가스하이드레이트연구자
+# Punctuation later screens use that is outside the base set.
+—

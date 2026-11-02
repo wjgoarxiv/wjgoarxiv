@@ -1,0 +1,10 @@
+{
+  "faces": {
+    "meslo-bold": {"glyphs": {" ": {"advance": 600, "d": ""}, "A": {"advance": 600, "d": "M0 0"}}},
+    "meslo-regular": {"glyphs": {" ": {"advance": 600, "d": ""}, "A": {"advance": 600, "d": "M0 0"}}},
+    "pretendard-bold": {"glyphs": {" ": {"advance": 500, "d": ""}, "A": {"advance": 600, "d": "M0 0"}}},
+    "pretendard-regular": {"glyphs": {" ": {"advance": 500, "d": ""}, "A": {"advance": 560, "d": "M0 0"}}},
+    "pretendard-semibold": {"glyphs": {" ": {"advance": 500, "d": ""}, "A": {"advance": 580, "d": "M0 0"}}}
+  },
+  "units_per_em": 1000
+}

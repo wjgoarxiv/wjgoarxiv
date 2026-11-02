@@ -1,0 +1,130 @@
+[
+  {
+    "group": "litfamily",
+    "name": "litfamily",
+    "url": "https://github.com/wjgoarxiv/litfamily",
+    "role": "author",
+    "status": "[RUN]",
+    "description": "Hub for the seven LitFamily coding-agent plugins."
+  },
+  {
+    "group": "litfamily",
+    "name": "litgravity",
+    "url": "https://github.com/wjgoarxiv/litgravity",
+    "role": "author",
+    "status": "[RUN]",
+    "description": "Adds lit to an Antigravity CLI prompt for a planned, tested, reviewed workflow and a handoff note."
+  },
+  {
+    "group": "litfamily",
+    "name": "litclaude",
+    "url": "https://github.com/wjgoarxiv/litclaude",
+    "role": "author",
+    "status": "[RUN]",
+    "description": "Adds lit to a Claude Code prompt for a planned, tested, reviewed workflow and a handoff note."
+  },
+  {
+    "group": "litfamily",
+    "name": "litcodex",
+    "url": "https://github.com/wjgoarxiv/litcodex",
+    "role": "author",
+    "status": "[RUN]",
+    "description": "Adds lit to a Codex CLI prompt for a planned, tested, reviewed workflow and a handoff note."
+  },
+  {
+    "group": "litfamily",
+    "name": "litopencode",
+    "url": "https://github.com/wjgoarxiv/litopencode",
+    "role": "author",
+    "status": "[RUN]",
+    "description": "Adds lit to an OpenCode prompt for a planned, tested, reviewed workflow and a handoff note."
+  },
+  {
+    "group": "litfamily",
+    "name": "lithermes",
+    "url": "https://github.com/wjgoarxiv/lithermes",
+    "role": "author",
+    "status": "[RUN]",
+    "description": "Adds lit to a Hermes Agent request for a planned, tested, reviewed workflow and a handoff note."
+  },
+  {
+    "group": "litfamily",
+    "name": "litgrok",
+    "url": "https://github.com/wjgoarxiv/litgrok",
+    "role": "author",
+    "status": "[RUN]",
+    "description": "Adds lit to a Grok Build prompt for a planned, tested, reviewed workflow and a handoff note."
+  },
+  {
+    "group": "science/mcp",
+    "name": "ovito-mcp",
+    "url": "https://github.com/wjgoarxiv/ovito-mcp",
+    "role": "author",
+    "status": "[OK]",
+    "description": "Headless OVITO MCP server for GROMACS and LAMMPS trajectories, OSPRay rendering, and hydrate cage analysis."
+  },
+  {
+    "group": "science/mcp",
+    "name": "pymol-mcp",
+    "url": "https://github.com/wjgoarxiv/pymol-mcp",
+    "role": "author",
+    "status": "[OK]",
+    "description": "Headless PyMOL MCP server for molecular visualization, MD workflows, and hydrate cage analysis."
+  },
+  {
+    "group": "science/mcp",
+    "name": "multiflash-assistant",
+    "url": "https://github.com/wjgoarxiv/multiflash-assistant",
+    "role": "author",
+    "status": "[OK]",
+    "description": "Drives Multiflash for hydrate and HLV phase-boundary runs, including inhibitor comparisons and CSV or plot output."
+  },
+  {
+    "group": "science/mcp",
+    "name": "hysys-companion-releases",
+    "url": "https://github.com/wjgoarxiv/hysys-companion-releases",
+    "role": "author",
+    "status": "[REL]",
+    "description": "Release channel for the HYSYS AI Companion."
+  },
+  {
+    "group": "env",
+    "name": "pretty-terminal",
+    "url": "https://github.com/wjgoarxiv/pretty-terminal",
+    "role": "author",
+    "status": "[OK]",
+    "description": "One command to set up a terminal on macOS, Linux, or Windows."
+  },
+  {
+    "group": "env",
+    "name": "my-tmux-settings",
+    "url": "https://github.com/wjgoarxiv/my-tmux-settings",
+    "role": "author",
+    "status": "[OK]",
+    "description": "Tokyonight Night tmux config for Windows, Mac, WSL2, and Linux."
+  },
+  {
+    "group": "env",
+    "name": "my-nvim-settings",
+    "url": "https://github.com/wjgoarxiv/my-nvim-settings",
+    "role": "author",
+    "status": "[OK]",
+    "description": "Neovim settings installed with Packer."
+  },
+  {
+    "group": "env",
+    "name": "proxlsx-skill",
+    "url": "https://github.com/wjgoarxiv/proxlsx-skill",
+    "role": "author",
+    "status": "[OK]",
+    "description": "Excel generation skill with themes, a builder API, and a style linter."
+  },
+  {
+    "group": "env",
+    "name": "publisher-docx-skill",
+    "url": "https://github.com/wjgoarxiv/publisher-docx-skill",
+    "role": "author",
+    "status": "[OK]",
+    "description": "Builds publisher-styled Word manuscripts, with anti-slop linting and Korean-safe type."
+  }
+]

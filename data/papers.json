@@ -1,0 +1,47 @@
+[
+  {
+    "year": "2021",
+    "short_venue": "CEJ",
+    "full_venue": "Chemical Engineering Journal",
+    "title": "Efficient dual-function inhibitors for prevention of gas hydrate formation and CO2/H2S corrosion inside oil and gas pipelines",
+    "doi": "10.1016/j.cej.2021.134098",
+    "url": "https://doi.org/10.1016/j.cej.2021.134098",
+    "slug": "cej-dual-inhibitors"
+  },
+  {
+    "year": "2019",
+    "short_venue": "ENERGY",
+    "full_venue": "Energy",
+    "title": "Experimental and computational investigation of methane hydrate inhibition in the presence of amino acids and ionic liquids",
+    "doi": "10.1016/j.energy.2019.06.025",
+    "url": "https://doi.org/10.1016/j.energy.2019.06.025",
+    "slug": "energy-amino-acids"
+  },
+  {
+    "year": "2022",
+    "short_venue": "FUEL",
+    "full_venue": "Fuel",
+    "title": "Dipeptides as environmentally friendly CH4 hydrate inhibitors: Experimental and computational approaches",
+    "doi": "10.1016/j.fuel.2022.125479",
+    "url": "https://doi.org/10.1016/j.fuel.2022.125479",
+    "slug": "fuel-dipeptides"
+  },
+  {
+    "year": "2024",
+    "short_venue": "APPL ENERGY",
+    "full_venue": "Applied Energy",
+    "title": "Experimental and computational insights into the inhibition of CO2 hydrate formation using biodegradable oligopeptides and their significance in CO2 transport and storage",
+    "doi": "10.1016/j.apenergy.2024.123523",
+    "url": "https://doi.org/10.1016/j.apenergy.2024.123523",
+    "slug": "apenergy-oligopeptides"
+  },
+  {
+    "year": "2024",
+    "short_venue": "CEJ",
+    "full_venue": "Chemical Engineering Journal",
+    "title": "Hydrate management strategies for CO2 injection into depleted gas reservoirs",
+    "doi": "10.1016/j.cej.2024.157251",
+    "url": "https://doi.org/10.1016/j.cej.2024.157251",
+    "slug": "cej-co2-injection"
+  }
+]
