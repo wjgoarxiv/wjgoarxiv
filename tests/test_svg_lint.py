@@ -48,11 +48,28 @@ def test_hero_motion():
         text = lint_svg(ASSETS / name)
         assert "@keyframes" in text
         assert "prefers-reduced-motion" in text
-        assert 'viewBox="0 0 1200 524"' in text
+        assert 'viewBox="0 0 1200 360"' in text
+        assert "@keyframes vertex" not in text
+        assert "cagedot" not in text
 
 
 def _plate(hero):
     return re.search(r'<svg id="nameplate"[^>]*>.*?</svg>', hero, re.DOTALL).group(0)
+
+
+def test_hero_fixture_stars_in_manifest():
+    import json
+
+    from scripts.render_hero import render
+
+    model = json.loads((ROOT / "tests" / "fixtures" / "live.json").read_text(encoding="utf-8"))
+    night = render("night", model=model)
+    day = render("day", model=model)
+    for svg in (night, day):
+        found = re.search(r"<!-- manifest:stars=(\d+) -->", svg)
+        assert found and found.group(1) == str(model["stars"])
+        assert "@keyframes vertex" not in svg
+        assert 'viewBox="0 0 1200 360"' in svg
 
 
 def test_hero_nameplate():
@@ -92,7 +109,7 @@ const {{ chromium }} = require("/Users/woojin/.nvm/versions/node/v22.22.0/lib/no
 (async () => {{
   const browser = await chromium.launch({{ channel: "chrome" }});
   const page = await browser.newPage({{
-    viewport: {{ width: 1200, height: 524 }},
+    viewport: {{ width: 1200, height: 360 }},
     deviceScaleFactor: 1,
     reducedMotion: "reduce",
   }});
@@ -184,9 +201,9 @@ def test_hero_reduced_motion_shows_final_frame():
                         count += 1
             return count
 
-        # Glyphs sit above the baseline: name ~238, tagline ~268. Mid-boot leaves both empty.
-        assert ink(218, 246) > 200, f"name line missing in {hero_name}"
-        assert ink(248, 272) > 200, f"tagline missing in {hero_name}"
+        # Default screen is 256 px. Name baseline 164, tagline 190. Glyphs sit above the baseline.
+        assert ink(148, 168) > 200, f"name line missing in {hero_name}"
+        assert ink(174, 194) > 200, f"tagline missing in {hero_name}"
 
 
 def test_panels_share_viewbox():

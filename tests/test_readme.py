@@ -66,6 +66,49 @@ def test_readme_contract():
         assert paper["title"] in text
 
 
+SUMMARIES = (
+    "<summary><samp>/projects/litfamily · 7</samp></summary>",
+    "<summary><samp>/projects/science-mcp · 4</samp></summary>",
+    "<summary><samp>/projects/env · 5</samp></summary>",
+    "<summary><samp>/papers · 5</samp></summary>",
+)
+V1_LINKS = (
+    "https://woojingo.notion.site",
+    "https://scholar.google.com/citations?user=V95iNggAAAAJ",
+    "https://orcid.org/0000-0003-4021-8621",
+    "https://www.linkedin.com/in/woojingo/",
+    "https://pypi.org/user/wjgo/",
+    "https://www.researchgate.net/profile/Woojin-Go",
+    "mailto:woo_go@yahoo.com",
+    "https://www.buymeacoffee.com/woojingo",
+)
+
+
+def test_folds_badges_contrib_and_orphans():
+    text = README.read_text(encoding="utf-8")
+    assert len(re.findall(r"<details>", text)) == 4
+    for summary in SUMMARIES:
+        assert summary in text
+    assert "hdr-" not in text
+    assert "status-" not in text
+    assert "assets/contrib-night.svg" in text
+    assert "assets/contrib-day.svg" in text
+    assert "https://github.com/wjgoarxiv?tab=overview" in text
+    badges = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))
+    for badge in badges:
+        assert badge["url"] in text
+        assert f'assets/badges/{badge["id"]}-night.svg' in text
+        assert f'assets/badges/{badge["id"]}-day.svg' in text
+    for url in V1_LINKS:
+        assert url in text
+    referenced = set(re.findall(r'(?:src|srcset)="([^"]+)"', text))
+    for svg in (ROOT / "assets").rglob("*.svg"):
+        rel = svg.relative_to(ROOT).as_posix()
+        if rel.startswith("assets/atlas/") or "lockup-" in rel:
+            continue
+        assert rel in referenced, rel
+
+
 def test_shields_in_a_copy_fails(tmp_path):
     bad = README.read_text(encoding="utf-8") + "\nhttps://img.shields.io/x\n"
     assert "shields.io" in bad.lower()

@@ -8,6 +8,7 @@ from pathlib import Path
 
 OK = {200, 301, 302, 303, 307, 308}
 DOI_OK = OK | {403}
+# Badge hrefs, the contribution overview, and these profile URLs are checked below.
 # These exact profile URLs are required, and this client is refused.
 BOT_WALL = {
     "https://scholar.google.com/citations?user=V95iNggAAAAJ": {404},

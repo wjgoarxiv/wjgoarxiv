@@ -96,8 +96,15 @@ def retire_unthemed(path):
         path.unlink()
 
 
-def chosen(argv=None):
+def options(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--theme", choices=tuple(THEMES))
+    parser.add_argument("--preset", default=None)
     args = parser.parse_args(argv)
-    return (args.theme,) if args.theme else tuple(THEMES)
+    themes = (args.theme,) if args.theme else tuple(THEMES)
+    return themes, args.preset
+
+
+def chosen(argv=None):
+    themes, _preset = options(argv)
+    return themes

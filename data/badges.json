@@ -1,0 +1,100 @@
+[
+  {
+    "id": "stars",
+    "label": "stars",
+    "live_key": "stars",
+    "url": "https://github.com/wjgoarxiv",
+    "group": "live"
+  },
+  {
+    "id": "followers",
+    "label": "followers",
+    "live_key": "followers",
+    "url": "https://github.com/wjgoarxiv?tab=followers",
+    "group": "live"
+  },
+  {
+    "id": "release",
+    "label": "release",
+    "live_key": "release",
+    "url": "https://github.com/wjgoarxiv/litfamily/releases",
+    "group": "live"
+  },
+  {
+    "id": "phd",
+    "label": "Ph.D.",
+    "value": "UNIST 2023",
+    "url": "https://scholar.google.com/citations?user=V95iNggAAAAJ",
+    "group": "id"
+  },
+  {
+    "id": "gas-hydrate",
+    "label": "research",
+    "value": "Gas Hydrate",
+    "url": "https://scholar.google.com/citations?user=V95iNggAAAAJ",
+    "group": "id"
+  },
+  {
+    "id": "flow-assurance",
+    "label": "research",
+    "value": "Flow Assurance",
+    "url": "https://scholar.google.com/citations?user=V95iNggAAAAJ",
+    "group": "id"
+  },
+  {
+    "id": "homepage",
+    "label": "homepage",
+    "value": "woojingo.notion.site",
+    "url": "https://woojingo.notion.site",
+    "group": "link"
+  },
+  {
+    "id": "scholar",
+    "label": "scholar",
+    "value": "Woojin Go",
+    "url": "https://scholar.google.com/citations?user=V95iNggAAAAJ",
+    "group": "link"
+  },
+  {
+    "id": "orcid",
+    "label": "orcid",
+    "value": "0000-0003-4021-8621",
+    "url": "https://orcid.org/0000-0003-4021-8621",
+    "group": "link"
+  },
+  {
+    "id": "linkedin",
+    "label": "linkedin",
+    "value": "woojingo",
+    "url": "https://www.linkedin.com/in/woojingo/",
+    "group": "link"
+  },
+  {
+    "id": "pypi",
+    "label": "pypi",
+    "value": "wjgo",
+    "url": "https://pypi.org/user/wjgo/",
+    "group": "link"
+  },
+  {
+    "id": "researchgate",
+    "label": "researchgate",
+    "value": "Woojin-Go",
+    "url": "https://www.researchgate.net/profile/Woojin-Go",
+    "group": "link"
+  },
+  {
+    "id": "mail",
+    "label": "mail",
+    "value": "woo_go@yahoo.com",
+    "url": "mailto:woo_go@yahoo.com",
+    "group": "link"
+  },
+  {
+    "id": "coffee",
+    "label": "coffee",
+    "value": "buy me one",
+    "url": "https://www.buymeacoffee.com/woojingo",
+    "group": "link"
+  }
+]

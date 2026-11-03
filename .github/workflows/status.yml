@@ -1,4 +1,4 @@
-name: Refresh status strip
+name: Refresh profile
 
 on:
   schedule:
@@ -9,25 +9,29 @@ permissions:
   contents: write
 
 jobs:
-  status:
+  refresh:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Render status strip
+      - name: Fetch live profile data
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GH_TOKEN: ${{ github.token }}
-        run: python scripts/render_status.py
-      - name: Commit status strip if it changed
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/fetch_live.py
+      - name: Render hero, badges and contribution lattice
         run: |
-          if git diff --quiet -- assets/status-night.svg assets/status-day.svg; then
+          python scripts/render_hero.py
+          python scripts/render_badges.py
+          python scripts/render_contrib.py
+      - name: Commit profile assets if they changed
+        run: |
+          git add assets/hero-night.svg assets/hero-day.svg assets/badges assets/contrib-night.svg assets/contrib-day.svg data/live.json data/contrib.json
+          if git diff --cached --quiet; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/status-night.svg assets/status-day.svg
-          git commit -m "chore: refresh status strip"
+          git commit -m "chore: refresh profile assets"
           git push

@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import crt
+import layout
 import svgtext
 import tokens
 
@@ -105,37 +106,18 @@ def _card(project, glyphs, p):
     )
 
 
-def _arrow(x, y, color):
-    return f'<path d="M{x} {y} L{x + 10} {y + 6} L{x} {y + 12} Z" fill="{color}"/>'
-
-
-def _bar(label, color, p):
-    return "".join(
-        (
-            crt.svg_open(BAR_W, BAR_H),
-            p.DEFS,
-            p.screen(BAR_W, BAR_H),
-            crt.ticks(BAR_W, BAR_H, color),
-            _arrow(18, 18, color),
-            p.bloom(crt.dot_text(label, 36, 12, 4, color)),
-            f'<line x1="16" y1="50" x2="{BAR_W - 16}" y2="50" stroke="{p.GRID}" stroke-width="1"/>',
-            "</svg>",
-        )
-    )
-
-
-def _paper(paper, glyphs, p):
-    title = wrap(paper["title"], "meslo-regular", 20, 1140, 2)
+def _paper(paper, glyphs, p, paper_w=PAPER_W, paper_h=PAPER_H):
+    title = wrap(paper["title"], "meslo-regular", 20, paper_w - 60, 2)
     body = [
-        p.screen(PAPER_W, PAPER_H),
-        crt.ticks(PAPER_W, PAPER_H, p.LAB),
+        p.screen(paper_w, paper_h),
+        crt.ticks(paper_w, paper_h, p.LAB),
         glyphs.text(f"ARCHIVE  {paper['year']}", "meslo-bold", 18, 18, 28, p.LAB),
         glyphs.text(paper["short_venue"], "meslo-regular", 16, 280, 28, p.LAB),
         glyphs.text(paper["doi"], "meslo-regular", 14, 18, 104, p.DIM),
     ]
     marker = "→ DOI"
     body.append(
-        glyphs.text(marker, "meslo-regular", 16, PAPER_W - 18 - glyphs.width(marker, "meslo-regular", 16), 104, p.DIM)
+        glyphs.text(marker, "meslo-regular", 16, paper_w - 18 - glyphs.width(marker, "meslo-regular", 16), 104, p.DIM)
     )
     y = 58
     for line in title:
@@ -143,7 +125,7 @@ def _paper(paper, glyphs, p):
         y += 24
     return "".join(
         [
-            crt.svg_open(PAPER_W, PAPER_H),
+            crt.svg_open(paper_w, paper_h),
             "<defs>",
             p.DEFS.replace("<defs>", "").replace("</defs>", ""),
             glyphs.defs(),
@@ -154,7 +136,20 @@ def _paper(paper, glyphs, p):
     )
 
 
-def render_all(theme="night"):
+def metrics(preset=None):
+    spec = layout.load(preset)
+    return {
+        "card_w": CARD_W,
+        "card_h": CARD_H,
+        "bar_w": spec["width"],
+        "bar_h": BAR_H,
+        "paper_w": spec["width"],
+        "paper_h": PAPER_H,
+    }
+
+
+def render_all(theme="night", preset=None):
+    size = metrics(preset)
     p = crt.Chrome(theme)
     projects = json.loads((ROOT / "data" / "projects.json").read_text(encoding="utf-8"))
     papers = json.loads((ROOT / "data" / "papers.json").read_text(encoding="utf-8"))
@@ -162,32 +157,22 @@ def render_all(theme="night"):
     strips = ROOT / "assets" / "papers"
     cards.mkdir(parents=True, exist_ok=True)
     strips.mkdir(parents=True, exist_ok=True)
-    counts = {}
     for project in projects:
-        counts[project["group"]] = counts.get(project["group"], 0) + 1
         dest = cards / f"{project['name']}.svg"
         tokens.themed_path(dest, theme).write_text(_card(project, Glyphs(), p), encoding="utf-8")
         tokens.retire_unthemed(dest)
-    bars = {
-        "hdr-projects.svg": ("/PROJECTS", p.TEXT),
-        "hdr-litfamily.svg": (f"LITFAMILY  {counts['litfamily']:02d} UNITS", p.WORK),
-        "hdr-science.svg": (f"SCIENCE / MCP  {counts['science/mcp']:02d} UNITS", p.LAB),
-        "hdr-env.svg": (f"ENV  {counts['env']:02d} UNITS", p.ENV),
-        "hdr-papers.svg": ("/PAPERS", p.TEXT),
-    }
-    for name, (label, color) in bars.items():
-        dest = cards / name
-        tokens.themed_path(dest, theme).write_text(_bar(label, color, p), encoding="utf-8")
-        tokens.retire_unthemed(dest)
     for paper in papers:
         dest = strips / f"{paper['year']}-{paper['slug']}.svg"
-        tokens.themed_path(dest, theme).write_text(_paper(paper, Glyphs(), p), encoding="utf-8")
+        tokens.themed_path(dest, theme).write_text(
+            _paper(paper, Glyphs(), p, size["paper_w"], size["paper_h"]), encoding="utf-8"
+        )
         tokens.retire_unthemed(dest)
 
 
 def main(argv=None):
-    for theme in tokens.chosen(argv):
-        render_all(theme)
+    themes, preset = tokens.options(argv)
+    for theme in themes:
+        render_all(theme, preset)
 
 
 if __name__ == "__main__":
