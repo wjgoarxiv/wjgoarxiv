@@ -184,6 +184,7 @@ try {
   });
   const lightPage = await light.newPage();
   await lightPage.goto(`http://127.0.0.1:${PORT}/light`, { waitUntil: "networkidle" });
+  await lightPage.waitForTimeout(3000);
   await lightPage.screenshot({ path: path.join(EVIDENCE, "light.png"), fullPage: true });
   await light.close();
 
@@ -195,6 +196,7 @@ try {
   });
   const phone = await mobile.newPage();
   await phone.goto(`http://127.0.0.1:${PORT}/dark`, { waitUntil: "networkidle" });
+  await phone.waitForTimeout(3000);
   await phone.screenshot({ path: path.join(EVIDENCE, "mobile.png"), fullPage: true });
   await mobile.close();
 

@@ -28,16 +28,9 @@
     "group": "id"
   },
   {
-    "id": "gas-hydrate",
+    "id": "research",
     "label": "research",
-    "value": "Gas Hydrate",
-    "url": "https://scholar.google.com/citations?user=V95iNggAAAAJ",
-    "group": "id"
-  },
-  {
-    "id": "flow-assurance",
-    "label": "research",
-    "value": "Flow Assurance",
+    "value": "Gas Hydrate · Flow Assurance",
     "url": "https://scholar.google.com/citations?user=V95iNggAAAAJ",
     "group": "id"
   },

@@ -339,16 +339,16 @@ def contrib_style(size, cols=53, rows=7):
 </style>"""
 
 
-def badge_style():
-    return """<style>
-@media (prefers-reduced-motion: no-preference) {
-  .value { animation: chip-in 240ms steps(3, end) both; }
-}
-@keyframes chip-in {
-  from { transform: translateX(-6px); }
-  to { transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .value { animation: none !important; transform: none !important; }
-}
+def badge_style(wait=0.0):
+    return f"""<style>
+@media (prefers-reduced-motion: no-preference) {{
+  .tab {{ transform-box: fill-box; transform-origin: 0 100%; animation: tab-in 240ms steps(3, end) {wait:.2f}s both; }}
+}}
+@keyframes tab-in {{
+  from {{ transform: scaleY(0); }}
+  to {{ transform: none; }}
+}}
+@media (prefers-reduced-motion: reduce) {{
+  .tab {{ animation: none !important; transform: none !important; }}
+}}
 </style>"""
