@@ -44,34 +44,46 @@ def test_every_svg_under_assets():
 
 
 def test_hero_motion():
-    text = lint_svg(ASSETS / "hero.svg")
-    assert "@keyframes" in text
-    assert "prefers-reduced-motion" in text
-    assert 'viewBox="0 0 1200 524"' in text
+    for name in ("hero-night.svg", "hero-day.svg"):
+        text = lint_svg(ASSETS / name)
+        assert "@keyframes" in text
+        assert "prefers-reduced-motion" in text
+        assert 'viewBox="0 0 1200 524"' in text
+
+
+def _plate(hero):
+    return re.search(r'<svg id="nameplate"[^>]*>.*?</svg>', hero, re.DOTALL).group(0)
 
 
 def test_hero_nameplate():
-    hero = (ASSETS / "hero.svg").read_text(encoding="utf-8")
-    lockup = (ASSETS / "lockup-dark.svg").read_text(encoding="utf-8")
-    wordmark = re.search(r'<g id="wordmark" fill="#F3EFE7">.*?</g>', lockup).group(0)
-    symbol = re.search(r'<g id="reverse-symbol"[^>]*>.*?</g>', lockup).group(0)
-    assert wordmark in hero
-    assert symbol in hero
-    plate = re.search(r'<svg id="nameplate"[^>]*>.*?</svg>', hero, re.DOTALL).group(0)
-    assert "filter=" not in plate
-    assert "url(#scan)" not in plate and "url(#dither)" not in plate and "url(#bloom)" not in plate
-    assert 'fill="#F3EFE7"' in plate
+    night = (ASSETS / "hero-night.svg").read_text(encoding="utf-8")
+    day = (ASSETS / "hero-day.svg").read_text(encoding="utf-8")
+    dark = (ASSETS / "lockup-dark.svg").read_text(encoding="utf-8")
+    light = (ASSETS / "lockup-light.svg").read_text(encoding="utf-8")
+    night_plate = _plate(night)
+    day_plate = _plate(day)
+    assert re.search(r'<g id="wordmark" fill="#F3EFE7">.*?</g>', dark).group(0) in night
+    assert re.search(r'<g id="reverse-symbol"[^>]*>.*?</g>', dark).group(0) in night
+    assert re.search(r'<g id="wordmark" fill="#26282D">.*?</g>', light).group(0) in day
+    assert re.search(r'<g id="horizontal-symbol"[^>]*>.*?</g>', light).group(0) in day
+    for plate, fill in ((night_plate, "#F3EFE7"), (day_plate, "#26282D")):
+        assert "filter=" not in plate
+        assert "url(#scan)" not in plate and "url(#dither)" not in plate and "url(#bloom)" not in plate
+        assert f'fill="{fill}"' in plate
+    assert 'fill="transparent"' not in day_plate
+    assert 'width="1400"' not in day_plate
 
 
-def test_hero_reduced_motion_shows_final_frame():
+def _shot_reduced(hero_name, png_name, background):
     import subprocess
 
     evidence = ROOT.parent / ".litclaude" / "evidence" / "profile-readme"
-    out = evidence / "task-8-hero-rm.png"
-    hero = (ASSETS / "hero.svg").read_text(encoding="utf-8")
-    html = evidence / "task-8-hero-rm.html"
+    evidence.mkdir(parents=True, exist_ok=True)
+    out = evidence / png_name
+    hero = (ASSETS / hero_name).read_text(encoding="utf-8")
+    html = evidence / f"{png_name}.html"
     html.write_text(
-        "<!doctype html><meta charset='utf-8'><style>html,body{margin:0;background:#05070d}</style>"
+        f"<!doctype html><meta charset='utf-8'><style>html,body{{margin:0;background:{background}}}</style>"
         f"<body>{hero}</body>",
         encoding="utf-8",
     )
@@ -91,12 +103,14 @@ const {{ chromium }} = require("/Users/woojin/.nvm/versions/node/v22.22.0/lib/no
 }})();
 """
     subprocess.run(["node", "-e", script], check=True)
-    # Final frame has the name line and the researcher line; mid-boot does not.
-    # Sample two text bands: name (~y 250) and tagline (~y 280) should not be empty navy.
+    return out
+
+
+def _png_rows(path):
     import struct
     import zlib
 
-    data = out.read_bytes()
+    data = Path(path).read_bytes()
     pos = 8
     width = height = color = None
     idat = b""
@@ -147,28 +161,44 @@ const {{ chromium }} = require("/Users/woojin/.nvm/versions/node/v22.22.0/lib/no
                 recon[i] = (value + paeth(left, up, ul)) & 255
         rows.append(recon)
         prev = recon
+    return rows, channels
 
-    def ink(y0, y1):
-        count = 0
-        for y in range(y0, y1):
-            row = rows[y]
-            for x in range(40, 700):
-                i = x * channels
-                if row[i] > 40 or row[i + 1] > 80 or row[i + 2] > 40:
-                    count += 1
-        return count
 
-    # Name line and tagline bands in the 1200x524 hero. Mid-boot leaves these empty.
-    assert ink(230, 270) > 200, "name line missing in reduced motion"
-    assert ink(270, 310) > 200, "tagline missing in reduced motion"
+def test_hero_reduced_motion_shows_final_frame():
+    shots = (
+        ("hero-night.svg", "task-8-hero-rm-night.png", "#1a1b26", (26, 27, 38)),
+        ("hero-day.svg", "task-8-hero-rm-day.png", "#e1e2e7", (225, 226, 231)),
+    )
+    for hero_name, png_name, background, bg in shots:
+        out = _shot_reduced(hero_name, png_name, background)
+        rows, channels = _png_rows(out)
+
+        def ink(y0, y1, bg=bg, rows=rows, channels=channels):
+            count = 0
+            for y in range(y0, y1):
+                row = rows[y]
+                for x in range(40, 700):
+                    i = x * channels
+                    delta = abs(row[i] - bg[0]) + abs(row[i + 1] - bg[1]) + abs(row[i + 2] - bg[2])
+                    if delta > 80:
+                        count += 1
+            return count
+
+        # Glyphs sit above the baseline: name ~238, tagline ~268. Mid-boot leaves both empty.
+        assert ink(218, 246) > 200, f"name line missing in {hero_name}"
+        assert ink(248, 272) > 200, f"tagline missing in {hero_name}"
 
 
 def test_panels_share_viewbox():
-    lab = lint_svg(ASSETS / "lab.svg")
-    workshop = lint_svg(ASSETS / "workshop.svg")
-    lab_box = re.search(r'viewBox="([^"]+)"', lab).group(1)
-    shop_box = re.search(r'viewBox="([^"]+)"', workshop).group(1)
-    assert lab_box == shop_box
-    assert "#39ff88" in lab
-    assert "#3da9ff" in workshop
-    assert "prefers-reduced-motion" in lab and "prefers-reduced-motion" in workshop
+    sys.path.insert(0, str(ROOT))
+    from scripts.tokens import THEMES
+
+    for theme in ("night", "day"):
+        lab = lint_svg(ASSETS / f"lab-{theme}.svg")
+        workshop = lint_svg(ASSETS / f"workshop-{theme}.svg")
+        lab_box = re.search(r'viewBox="([^"]+)"', lab).group(1)
+        shop_box = re.search(r'viewBox="([^"]+)"', workshop).group(1)
+        assert lab_box == shop_box
+        assert THEMES[theme]["lab"] in lab
+        assert THEMES[theme]["workshop"] in workshop
+        assert "prefers-reduced-motion" in lab and "prefers-reduced-motion" in workshop

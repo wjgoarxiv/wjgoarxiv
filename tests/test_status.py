@@ -2,6 +2,7 @@
 
 import ast
 import hashlib
+import json
 import os
 import subprocess
 import sys
@@ -28,17 +29,28 @@ def test_fixture_is_deterministic(tmp_path):
     text = first.read_text(encoding="utf-8")
     assert "v1.4.0" not in text  # paths, not text nodes
     assert "<text" not in text.lower()
-    assert "#ffb000" not in text
+    from scripts.tokens import THEMES
+
+    assert THEMES["night"]["warn"] not in text
     uptime = (date(2026, 11, 2) - date(2023, 8, 1)).days
     line = render_status.status_line(
         {"latest": "v1.4.0", "stars": 167, "last_push": "2026-10-20", "updated": "2026-11-02"}
     )
     assert "v1.4.0" in line and "167" in line and str(uptime) in line
     assert "2026-11-02" in line
-    stale = render_status.render_svg(
-        {"latest": "v0", "stars": 1, "last_push": "2026-01-01", "updated": "2026-11-02"}
-    )
-    assert "#ffb000" in stale
+    stale_model = {"latest": "v0", "stars": 1, "last_push": "2026-01-01", "updated": "2026-11-02"}
+    fresh_model = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    for theme in ("night", "day"):
+        fresh = render_status.render_svg(fresh_model, theme)
+        stale = render_status.render_svg(stale_model, theme)
+        assert THEMES[theme]["warn"] not in fresh
+        assert THEMES[theme]["warn"] in stale
+        assert THEMES[theme]["screen_bg"] in fresh
+        assert THEMES[theme]["lab"] in fresh
+    written = render_status.render_both(fresh_model, tmp_path / "status.svg")
+    assert {path.name for path in written} == {"status-night.svg", "status-day.svg"}
+    workflow = (ROOT / ".github" / "workflows" / "status.yml").read_text(encoding="utf-8")
+    assert "git add assets/status-night.svg assets/status-day.svg" in workflow
 
 
 def test_http_error_leaves_file(tmp_path):

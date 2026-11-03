@@ -7,16 +7,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import crt
 import svgtext
+import tokens
 
 ROOT = Path(__file__).resolve().parents[1]
 CARD_W, CARD_H = 400, 190
 BAR_W, BAR_H = 1200, 56
 PAPER_W, PAPER_H = 1200, 118
-ACCENT = {
-    "litfamily": "#3da9ff",
-    "science/mcp": "#39ff88",
-    "env": "#c9d6e8",
-}
 
 
 class Glyphs:
@@ -75,28 +71,32 @@ def wrap(text, face, size, max_width, max_lines):
     return lines
 
 
-def _card(project, glyphs):
-    accent = ACCENT[project["group"]]
+def _accent(p, group):
+    return {"litfamily": p.WORK, "science/mcp": p.LAB, "env": p.ENV}[group]
+
+
+def _card(project, glyphs, p):
+    accent = _accent(p, project["group"])
     size = 20
     lines = wrap(project["description"], "meslo-regular", size, 360, 3)
     body = [
-        crt.screen(CARD_W, CARD_H),
+        p.screen(CARD_W, CARD_H),
         crt.ticks(CARD_W, CARD_H, accent),
         f'<rect x="16" y="12" width="10" height="10" fill="{accent}"/>',
         glyphs.text(project["name"], "meslo-bold", size, 32, 22, accent),
-        f'<line x1="14" y1="34" x2="{CARD_W - 14}" y2="34" stroke="{crt.GRID}" stroke-width="1"/>',
-        glyphs.text("AUTHOR", "meslo-regular", size, 16, 60, crt.TEXT),
+        f'<line x1="14" y1="34" x2="{CARD_W - 14}" y2="34" stroke="{p.GRID}" stroke-width="1"/>',
+        glyphs.text("AUTHOR", "meslo-regular", size, 16, 60, p.TEXT),
         glyphs.text(project["status"], "meslo-regular", size, 250, 60, accent),
     ]
     y = 92
     for line in lines:
-        body.append(glyphs.text(line, "meslo-regular", size, 16, y, crt.TEXT))
+        body.append(glyphs.text(line, "meslo-regular", size, 16, y, p.TEXT))
         y += 26
     return "".join(
         [
             crt.svg_open(CARD_W, CARD_H),
             "<defs>",
-            crt.DEFS.replace("<defs>", "").replace("</defs>", ""),
+            p.DEFS.replace("<defs>", "").replace("</defs>", ""),
             glyphs.defs(),
             "</defs>",
             *body,
@@ -109,43 +109,43 @@ def _arrow(x, y, color):
     return f'<path d="M{x} {y} L{x + 10} {y + 6} L{x} {y + 12} Z" fill="{color}"/>'
 
 
-def _bar(label, color):
+def _bar(label, color, p):
     return "".join(
         (
             crt.svg_open(BAR_W, BAR_H),
-            crt.DEFS,
-            crt.screen(BAR_W, BAR_H),
+            p.DEFS,
+            p.screen(BAR_W, BAR_H),
             crt.ticks(BAR_W, BAR_H, color),
             _arrow(18, 18, color),
-            f'<g filter="url(#bloom)">{crt.dot_text(label, 36, 12, 4, color)}</g>',
-            f'<line x1="16" y1="50" x2="{BAR_W - 16}" y2="50" stroke="{crt.GRID}" stroke-width="1"/>',
+            p.bloom(crt.dot_text(label, 36, 12, 4, color)),
+            f'<line x1="16" y1="50" x2="{BAR_W - 16}" y2="50" stroke="{p.GRID}" stroke-width="1"/>',
             "</svg>",
         )
     )
 
 
-def _paper(paper, glyphs):
+def _paper(paper, glyphs, p):
     title = wrap(paper["title"], "meslo-regular", 20, 1140, 2)
     body = [
-        crt.screen(PAPER_W, PAPER_H),
-        crt.ticks(PAPER_W, PAPER_H, crt.LAB),
-        glyphs.text(f"ARCHIVE  {paper['year']}", "meslo-bold", 18, 18, 28, crt.LAB),
-        glyphs.text(paper["short_venue"], "meslo-regular", 16, 280, 28, crt.LAB),
-        glyphs.text(paper["doi"], "meslo-regular", 14, 18, 104, crt.DIM),
+        p.screen(PAPER_W, PAPER_H),
+        crt.ticks(PAPER_W, PAPER_H, p.LAB),
+        glyphs.text(f"ARCHIVE  {paper['year']}", "meslo-bold", 18, 18, 28, p.LAB),
+        glyphs.text(paper["short_venue"], "meslo-regular", 16, 280, 28, p.LAB),
+        glyphs.text(paper["doi"], "meslo-regular", 14, 18, 104, p.DIM),
     ]
     marker = "→ DOI"
     body.append(
-        glyphs.text(marker, "meslo-regular", 16, PAPER_W - 18 - glyphs.width(marker, "meslo-regular", 16), 104, crt.DIM)
+        glyphs.text(marker, "meslo-regular", 16, PAPER_W - 18 - glyphs.width(marker, "meslo-regular", 16), 104, p.DIM)
     )
     y = 58
     for line in title:
-        body.append(glyphs.text(line, "meslo-regular", 20, 18, y, crt.TEXT))
+        body.append(glyphs.text(line, "meslo-regular", 20, 18, y, p.TEXT))
         y += 24
     return "".join(
         [
             crt.svg_open(PAPER_W, PAPER_H),
             "<defs>",
-            crt.DEFS.replace("<defs>", "").replace("</defs>", ""),
+            p.DEFS.replace("<defs>", "").replace("</defs>", ""),
             glyphs.defs(),
             "</defs>",
             *body,
@@ -154,7 +154,8 @@ def _paper(paper, glyphs):
     )
 
 
-def render_all():
+def render_all(theme="night"):
+    p = crt.Chrome(theme)
     projects = json.loads((ROOT / "data" / "projects.json").read_text(encoding="utf-8"))
     papers = json.loads((ROOT / "data" / "papers.json").read_text(encoding="utf-8"))
     cards = ROOT / "assets" / "cards"
@@ -164,22 +165,29 @@ def render_all():
     counts = {}
     for project in projects:
         counts[project["group"]] = counts.get(project["group"], 0) + 1
-        (cards / f"{project['name']}.svg").write_text(_card(project, Glyphs()), encoding="utf-8")
+        dest = cards / f"{project['name']}.svg"
+        tokens.themed_path(dest, theme).write_text(_card(project, Glyphs(), p), encoding="utf-8")
+        tokens.retire_unthemed(dest)
     bars = {
-        "hdr-projects.svg": ("/PROJECTS", crt.TEXT),
-        "hdr-litfamily.svg": (f"LITFAMILY  {counts['litfamily']:02d} UNITS", "#3da9ff"),
-        "hdr-science.svg": (f"SCIENCE / MCP  {counts['science/mcp']:02d} UNITS", "#39ff88"),
-        "hdr-env.svg": (f"ENV  {counts['env']:02d} UNITS", "#c9d6e8"),
-        "hdr-papers.svg": ("/PAPERS", crt.TEXT),
+        "hdr-projects.svg": ("/PROJECTS", p.TEXT),
+        "hdr-litfamily.svg": (f"LITFAMILY  {counts['litfamily']:02d} UNITS", p.WORK),
+        "hdr-science.svg": (f"SCIENCE / MCP  {counts['science/mcp']:02d} UNITS", p.LAB),
+        "hdr-env.svg": (f"ENV  {counts['env']:02d} UNITS", p.ENV),
+        "hdr-papers.svg": ("/PAPERS", p.TEXT),
     }
     for name, (label, color) in bars.items():
-        (cards / name).write_text(_bar(label, color), encoding="utf-8")
+        dest = cards / name
+        tokens.themed_path(dest, theme).write_text(_bar(label, color, p), encoding="utf-8")
+        tokens.retire_unthemed(dest)
     for paper in papers:
-        (strips / f"{paper['year']}-{paper['slug']}.svg").write_text(_paper(paper, Glyphs()), encoding="utf-8")
+        dest = strips / f"{paper['year']}-{paper['slug']}.svg"
+        tokens.themed_path(dest, theme).write_text(_paper(paper, Glyphs(), p), encoding="utf-8")
+        tokens.retire_unthemed(dest)
 
 
-def main():
-    render_all()
+def main(argv=None):
+    for theme in tokens.chosen(argv):
+        render_all(theme)
 
 
 if __name__ == "__main__":

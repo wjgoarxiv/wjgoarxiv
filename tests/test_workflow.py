@@ -14,6 +14,9 @@ def check_workflow(text):
     assert "actions/checkout@v" in text
     assert "actions/setup-python@v" in text
     assert "github-actions[bot]" in text
+    assert "assets/status-night.svg" in text
+    assert "assets/status-day.svg" in text
+    assert "git add assets/status-night.svg assets/status-day.svg" in text
 
 
 def test_status_workflow():

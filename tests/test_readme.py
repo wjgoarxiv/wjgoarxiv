@@ -29,7 +29,19 @@ def test_readme_contract():
     for src in re.findall(r'(?:src|srcset)="([^"]+)"', text):
         assert not src.startswith("http"), src
         assert (ROOT / src).is_file(), src
-    assert "<picture>" not in text
+    pictures = re.findall(r"<picture>.*?</picture>", text, re.DOTALL)
+    assert pictures
+    assert "<img" not in re.sub(r"<picture>.*?</picture>", "", text, flags=re.DOTALL)
+    for pic in pictures:
+        assert 'media="(prefers-color-scheme: dark)"' in pic
+        assert 'media="(prefers-color-scheme: light)"' in pic
+        night = re.search(r'srcset="([^"]+-night\.svg)"', pic)
+        day = re.search(r'srcset="([^"]+-day\.svg)"', pic)
+        img = re.search(r'<img[^>]*src="([^"]+)"', pic)
+        assert night and day and img
+        assert (ROOT / night.group(1)).is_file()
+        assert (ROOT / day.group(1)).is_file()
+        assert img.group(1) == night.group(1)
     assert "lockup-dark.svg" not in text
     assert "lockup-light.svg" not in text
     assert "Woojin Go, Ph.D." in text
@@ -39,17 +51,19 @@ def test_readme_contract():
     projects = json.loads((ROOT / "data" / "projects.json").read_text(encoding="utf-8"))
     papers = json.loads((ROOT / "data" / "papers.json").read_text(encoding="utf-8"))
     for project in projects:
-        card = f'assets/cards/{project["name"]}.svg'
-        assert card in text
+        for theme in ("night", "day"):
+            card = f'assets/cards/{project["name"]}-{theme}.svg'
+            assert card in text
+            assert (ROOT / card).is_file()
         assert project["url"] in text
         assert project["name"] in text
-        assert (ROOT / card).is_file()
     for paper in papers:
-        strip = f'assets/papers/{paper["year"]}-{paper["slug"]}.svg'
-        assert strip in text
+        for theme in ("night", "day"):
+            strip = f'assets/papers/{paper["year"]}-{paper["slug"]}-{theme}.svg'
+            assert strip in text
+            assert (ROOT / strip).is_file()
         assert paper["url"] in text
         assert paper["title"] in text
-        assert (ROOT / strip).is_file()
 
 
 def test_shields_in_a_copy_fails(tmp_path):

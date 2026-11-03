@@ -20,8 +20,12 @@ body.light { background: #ffffff; color: #1f2328; }
   padding: 0 16px 48px;
   font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
 }
-themed-picture, markdown-accessiblity-table { display: block; }
-.markdown-body img, .markdown-body picture, .markdown-body svg { max-width: 100%; height: auto; }
+themed-picture, .markdown-body picture { display: contents; }
+markdown-accessiblity-table { display: block; }
+.markdown-body img, .markdown-body svg { max-width: 100%; height: auto; }
+.markdown-body img[width="32%"] { width: 32%; }
+.markdown-body img[width="49%"] { width: 49%; }
+.markdown-body img[width="100%"] { width: 100%; }
 .markdown-body table { border-collapse: collapse; width: 100%; }
 .markdown-body th, .markdown-body td { border: 1px solid #30363d; padding: 6px 13px; text-align: left; vertical-align: top; }
 body.light .markdown-body th, body.light .markdown-body td { border-color: #d1d9e0; }
@@ -46,8 +50,8 @@ function markdownHtml() {
 function page(body, theme, { inlineHero = false } = {}) {
   let html = body;
   if (inlineHero) {
-    const hero = fs.readFileSync(path.join(PROFILE, "assets", "hero.svg"), "utf8");
-    html = html.replace(/<img\b[^>]*assets\/hero\.svg[^>]*>/i, hero);
+    const hero = fs.readFileSync(path.join(PROFILE, "assets", "hero-night.svg"), "utf8");
+    html = html.replace(/<picture>[\s\S]*?assets\/hero-night\.svg[\s\S]*?<\/picture>/i, hero);
   }
   return `<!doctype html><meta charset="utf-8"><title>preview</title><style>${CSS}</style><body class="${theme}"><article class="markdown-body">${html}</article></body>`;
 }
@@ -121,6 +125,37 @@ try {
     wait: 4800,
   });
   await shoot(browser, path.join(EVIDENCE, "task-10-rm.png"), {
+    url: `${ORIGIN}/reduce`,
+    viewport: { width: 1280, height: 900 },
+    colorScheme: "dark",
+    reducedMotion: "reduce",
+    wait: 200,
+  });
+  await shoot(browser, path.join(EVIDENCE, "theme-dark.png"), {
+    url: `${ORIGIN}/dark`,
+    viewport: { width: 1280, height: 900 },
+    colorScheme: "dark",
+    wait: 4200,
+  });
+  await shoot(browser, path.join(EVIDENCE, "theme-light.png"), {
+    url: `${ORIGIN}/light`,
+    viewport: { width: 1280, height: 900 },
+    colorScheme: "light",
+    wait: 4200,
+  });
+  await shoot(browser, path.join(EVIDENCE, "theme-mobile-dark.png"), {
+    url: `${ORIGIN}/dark`,
+    viewport: { width: 390, height: 800 },
+    colorScheme: "dark",
+    wait: 800,
+  });
+  await shoot(browser, path.join(EVIDENCE, "theme-mobile-light.png"), {
+    url: `${ORIGIN}/light`,
+    viewport: { width: 390, height: 800 },
+    colorScheme: "light",
+    wait: 800,
+  });
+  await shoot(browser, path.join(EVIDENCE, "theme-rm.png"), {
     url: `${ORIGIN}/reduce`,
     viewport: { width: 1280, height: 900 },
     colorScheme: "dark",

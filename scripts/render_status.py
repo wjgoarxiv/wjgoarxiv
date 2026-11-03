@@ -11,6 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import crt
+import tokens
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = ROOT / "assets" / "status.svg"
@@ -52,36 +53,49 @@ def _short_rel(latest):
     return f"REL {latest}"
 
 
-def render_svg(model):
+def render_svg(model, theme="night"):
+    p = crt.Chrome(theme)
     stale = _stale(model)
     updated = date.fromisoformat(model["updated"])
     uptime = (updated - PHD).days
     push = model["last_push"][5:10]
     cells = (
-        ("SYS", crt.TEXT),
-        ("LAB ● ON", crt.LAB),
-        ("WORK ● ON", crt.WORK),
-        (_short_rel(model["latest"]), crt.TEXT),
-        (f"★ {model['stars']}", crt.TEXT),
-        (f"PUSH {push}", crt.WARN if stale else crt.TEXT),
-        (f"UP {uptime}d", crt.TEXT),
-        (f"UPD {model['updated']}", crt.TEXT),
+        ("SYS", p.TEXT),
+        ("LAB ● ON", p.LAB),
+        ("WORK ● ON", p.WORK),
+        (_short_rel(model["latest"]), p.TEXT),
+        (f"★ {model['stars']}", p.TEXT),
+        (f"PUSH {push}", p.WARN if stale else p.TEXT),
+        (f"UP {uptime}d", p.TEXT),
+        (f"UPD {model['updated']}", p.TEXT),
     )
     size = 15
     x = 10
-    bits = [crt.svg_open(W, H), crt.DEFS, crt.screen(W, H), crt.ticks(W, H, crt.GRID)]
+    bits = [crt.svg_open(W, H), p.DEFS, p.screen(W, H), crt.ticks(W, H, p.GRID)]
     for label, fill in cells:
         cell_w = crt.width(label, "meslo-regular", size) + 18
-        bits.append(f'<rect x="{x:.1f}" y="16" width="{cell_w:.1f}" height="40" fill="none" stroke="#3d5c7a"/>')
+        bits.append(f'<rect x="{x:.1f}" y="16" width="{cell_w:.1f}" height="40" fill="none" stroke="{p.BORDER}"/>')
         bits.append(crt.text(label, "meslo-regular", size, x + 8, 42, fill))
         x += cell_w + 6
     bits.append("</svg>")
     return "".join(bits)
 
 
-def render_file(fixture, out):
+def render_file(fixture, out, theme="night"):
     model = json.loads(Path(fixture).read_text(encoding="utf-8"))
-    _write(out, render_svg(model))
+    _write(out, render_svg(model, theme))
+
+
+def render_both(model, out=None):
+    base = Path(out) if out else DEFAULT_OUT
+    written = []
+    for theme in ("night", "day"):
+        dest = tokens.themed_path(base, theme)
+        _write(dest, render_svg(model, theme))
+        written.append(dest)
+    if out is None:
+        tokens.retire_unthemed(DEFAULT_OUT)
+    return written
 
 
 def _write(path, text):
@@ -170,14 +184,22 @@ def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--fixture")
     parser.add_argument("--out", default=str(DEFAULT_OUT))
+    parser.add_argument("--theme", choices=("night", "day"))
     parser.add_argument("--api-base", default=os.environ.get("GITHUB_API", API))
     args = parser.parse_args(argv)
     try:
         if args.fixture:
-            render_file(args.fixture, args.out)
+            model = json.loads(Path(args.fixture).read_text(encoding="utf-8"))
+        else:
+            model = fetch_live(args.api_base.rstrip("/"), _token())
+        if args.theme:
+            dest = Path(args.out)
+            if dest == DEFAULT_OUT:
+                dest = tokens.themed_path(DEFAULT_OUT, args.theme)
+            _write(dest, render_svg(model, args.theme))
+            tokens.retire_unthemed(DEFAULT_OUT)
             return 0
-        model = fetch_live(args.api_base.rstrip("/"), _token())
-        _write(args.out, render_svg(model))
+        render_both(model)
         return 0
     except Exception:
         return 1

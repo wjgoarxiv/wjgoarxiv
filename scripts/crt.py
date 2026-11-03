@@ -6,14 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import svgtext
-
-BG = "#05070d"
-GRID = "#13203a"
-TEXT = "#c9d6e8"
-LAB = "#39ff88"
-WORK = "#3da9ff"
-WARN = "#ffb000"
-DIM = "#8ea3bb"
+import tokens
 
 # 5x7, rows of 5 bits. Uppercase, slash, hyphen.
 _GLYPH = {
@@ -57,29 +50,6 @@ _GLYPH = {
     "9": "01110,10001,10001,01111,00001,00010,01100",
 }
 
-DEFS = """<defs>
-<pattern id="scan" width="3" height="3" patternUnits="userSpaceOnUse">
-  <rect width="3" height="2" fill="#10192c"/>
-  <rect y="2" width="3" height="1" fill="#000000" opacity="0.22"/>
-</pattern>
-<pattern id="dither" width="4" height="4" patternUnits="userSpaceOnUse">
-  <rect width="1" height="1" fill="#c9d6e8" opacity="0.09"/>
-  <rect x="2" y="2" width="1" height="1" fill="#c9d6e8" opacity="0.06"/>
-</pattern>
-<radialGradient id="vig" cx="50%" cy="42%" r="68%">
-  <stop offset="58%" stop-color="#000000" stop-opacity="0"/>
-  <stop offset="100%" stop-color="#000000" stop-opacity="0.62"/>
-</radialGradient>
-<filter id="bloom" x="-12%" y="-50%" width="124%" height="200%">
-  <feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="blur"/>
-  <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.85 0" result="glow"/>
-  <feMerge>
-    <feMergeNode in="glow"/>
-    <feMergeNode in="SourceGraphic"/>
-  </feMerge>
-</filter>
-</defs>"""
-
 
 def svg_open(width, height):
     return (
@@ -96,21 +66,10 @@ def width(value, face, size):
     return svgtext.text_width(value, face, size, 0)
 
 
-def screen(width, height):
-    return (
-        f'<rect width="{width}" height="{height}" fill="{BG}"/>'
-        f'<rect width="{width}" height="{height}" fill="url(#scan)"/>'
-        f'<rect width="{width}" height="{height}" fill="url(#dither)"/>'
-        f'<rect width="{width}" height="{height}" fill="url(#vig)"/>'
-        f'<rect x="0.5" y="0.5" width="{width - 1}" height="{height - 1}" fill="none" '
-        f'stroke="{GRID}" stroke-width="1"/>'
-    )
-
-
-def ticks(width, height, color):
+def ticks(box_w, box_h, color):
     s = 14
     marks = []
-    corners = ((1, 1, 1, 1), (width - 1, 1, -1, 1), (1, height - 1, 1, -1), (width - 1, height - 1, -1, -1))
+    corners = ((1, 1, 1, 1), (box_w - 1, 1, -1, 1), (1, box_h - 1, 1, -1), (box_w - 1, box_h - 1, -1, -1))
     for x, y, dx, dy in corners:
         marks.append(
             f'<path d="M{x + dx * s} {y} H{x} V{y + dy * s}" fill="none" stroke="{color}" stroke-width="1"/>'
@@ -120,29 +79,6 @@ def ticks(width, height, color):
             f'fill="none" stroke="{color}" stroke-width="1"/>'
         )
     return "".join(marks)
-
-
-def coords(height, x=6):
-    bits = []
-    y = 46
-    n = 0
-    while y < height - 18 and n < 8:
-        bits.append(text(f"{n:02d}", "meslo-regular", 9, x, y, DIM))
-        y += 36
-        n += 1
-    return "".join(bits)
-
-
-def blocks(labels, accent, y=8, size=11):
-    x = 18
-    bits = []
-    for label in labels:
-        tw = width(label, "meslo-regular", size) + 14
-        bits.append(f'<rect x="{x}" y="{y}" width="{tw:.1f}" height="16" fill="none" stroke="{GRID}"/>')
-        bits.append(f'<rect x="{x}" y="{y}" width="3" height="16" fill="{accent}"/>')
-        bits.append(text(label, "meslo-regular", size, x + 7, y + 12, TEXT))
-        x += tw + 6
-    return "".join(bits)
 
 
 def dot_text(value, x, y, cell, fill, gap=1):
@@ -229,37 +165,116 @@ def cage(cx, cy, scale, color):
 
 
 def curve(x, y, w, h, color):
-    x0, y0 = x, y + h
-    x1, y1 = x + w, y
+    y0 = y + h
+    x1 = x + w
     pts = []
     for i in range(9):
         t = i / 8
         px = x + t * w
         py = y + h - (t ** 1.35) * h * 0.82
         pts.append(f"{px:.1f},{py:.1f}")
-    ticks = []
+    marks = []
     for i in range(5):
         tx = x + i * w / 4
-        ticks.append(f'<path d="M{tx:.1f} {y0} V{y0 + 4}" stroke="{color}" stroke-width="1"/>')
+        marks.append(f'<path d="M{tx:.1f} {y0} V{y0 + 4}" stroke="{color}" stroke-width="1"/>')
     for i in range(4):
         ty = y + h - i * h / 3
-        ticks.append(f'<path d="M{x} {ty:.1f} H{x - 4}" stroke="{color}" stroke-width="1"/>')
+        marks.append(f'<path d="M{x} {ty:.1f} H{x - 4}" stroke="{color}" stroke-width="1"/>')
     return (
         f'<path d="M{x} {y} V{y0} H{x1}" fill="none" stroke="{color}" stroke-width="1"/>'
-        + "".join(ticks)
+        + "".join(marks)
         + f'<polyline points="{" ".join(pts)}" fill="none" stroke="{color}" stroke-width="1.6"/>'
         + text("P / MPa", "meslo-regular", 10, x + 8, y + 12, color)
         + text("T / K", "meslo-regular", 10, x + w - 36, y0 - 6, color)
     )
 
 
-def meter(x, y, w, color, filled=8, total=12):
-    gap = 3
-    cell = (w - gap * (total - 1)) / total
-    bits = []
-    for i in range(total):
-        fill = color if i < filled else GRID
-        bits.append(
-            f'<rect x="{x + i * (cell + gap):.1f}" y="{y}" width="{cell:.1f}" height="8" fill="{fill}"/>'
+class Chrome:
+    def __init__(self, theme="night"):
+        self.theme = theme
+        self.t = tokens.THEMES[theme]
+        self.BG = self.t["screen_bg"]
+        self.GRID = self.t["grid"]
+        self.BORDER = self.t["border"]
+        self.TEXT = self.t["text"]
+        self.DIM = self.t["text_dim"]
+        self.LAB = self.t["lab"]
+        self.WORK = self.t["workshop"]
+        self.WARN = self.t["warn"]
+        self.ENV = self.t["env"]
+        self.DEFS = self._defs()
+
+    def _defs(self):
+        t = self.t
+        bloom = ""
+        if float(t["bloom_opacity"]) > 0:
+            bloom = (
+                f'<filter id="bloom" x="-12%" y="-50%" width="124%" height="200%">'
+                f'<feGaussianBlur in="SourceGraphic" stdDeviation="{t["bloom_blur"]}" result="blur"/>'
+                f'<feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 {t["bloom_opacity"]} 0" result="glow"/>'
+                f"<feMerge><feMergeNode in=\"glow\"/><feMergeNode in=\"SourceGraphic\"/></feMerge>"
+                f"</filter>"
+            )
+        return (
+            "<defs>"
+            f'<pattern id="scan" width="3" height="3" patternUnits="userSpaceOnUse">'
+            f'<rect y="2" width="3" height="1" fill="{t["scan"]}" opacity="{t["scan_opacity"]}"/>'
+            f"</pattern>"
+            f'<pattern id="dither" width="4" height="4" patternUnits="userSpaceOnUse">'
+            f'<rect width="1" height="1" fill="{t["dither"]}" opacity="{t["dither_opacity"]}"/>'
+            f'<rect x="2" y="2" width="1" height="1" fill="{t["dither"]}" opacity="{t["dither_opacity_alt"]}"/>'
+            f"</pattern>"
+            f'<radialGradient id="vig" cx="50%" cy="42%" r="68%">'
+            f'<stop offset="58%" stop-color="{t["vig"]}" stop-opacity="0"/>'
+            f'<stop offset="100%" stop-color="{t["vig"]}" stop-opacity="{t["vig_opacity"]}"/>'
+            f"</radialGradient>"
+            f"{bloom}"
+            "</defs>"
         )
-    return "".join(bits)
+
+    def bloom(self, markup):
+        if float(self.t["bloom_opacity"]) <= 0:
+            return markup
+        return f'<g filter="url(#bloom)">{markup}</g>'
+
+    def screen(self, box_w, box_h):
+        return (
+            f'<rect width="{box_w}" height="{box_h}" fill="{self.BG}"/>'
+            f'<rect width="{box_w}" height="{box_h}" fill="url(#scan)"/>'
+            f'<rect width="{box_w}" height="{box_h}" fill="url(#dither)"/>'
+            f'<rect width="{box_w}" height="{box_h}" fill="url(#vig)"/>'
+            f'<rect x="0.5" y="0.5" width="{box_w - 1}" height="{box_h - 1}" fill="none" '
+            f'stroke="{self.GRID}" stroke-width="1"/>'
+        )
+
+    def coords(self, box_h, x=6):
+        bits = []
+        y = 46
+        n = 0
+        while y < box_h - 18 and n < 8:
+            bits.append(text(f"{n:02d}", "meslo-regular", 9, x, y, self.DIM))
+            y += 36
+            n += 1
+        return "".join(bits)
+
+    def blocks(self, labels, accent, y=8, size=11):
+        x = 18
+        bits = []
+        for label in labels:
+            tw = width(label, "meslo-regular", size) + 14
+            bits.append(f'<rect x="{x}" y="{y}" width="{tw:.1f}" height="16" fill="none" stroke="{self.GRID}"/>')
+            bits.append(f'<rect x="{x}" y="{y}" width="3" height="16" fill="{accent}"/>')
+            bits.append(text(label, "meslo-regular", size, x + 7, y + 12, self.TEXT))
+            x += tw + 6
+        return "".join(bits)
+
+    def meter(self, x, y, w, color, filled=8, total=12):
+        gap = 3
+        cell = (w - gap * (total - 1)) / total
+        bits = []
+        for i in range(total):
+            fill = color if i < filled else self.GRID
+            bits.append(
+                f'<rect x="{x + i * (cell + gap):.1f}" y="{y}" width="{cell:.1f}" height="8" fill="{fill}"/>'
+            )
+        return "".join(bits)

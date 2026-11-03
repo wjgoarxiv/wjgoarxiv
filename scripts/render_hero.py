@@ -1,11 +1,13 @@
 """CRT boot hero."""
 
+import re
 from pathlib import Path
 
 import crt
+import tokens
 
 OUT = Path(__file__).resolve().parents[1] / "assets" / "hero.svg"
-LOCKUP = Path(__file__).resolve().parents[1] / "assets" / "lockup-dark.svg"
+ASSETS = OUT.parent
 W, SCREEN, BEZEL = 1200, 420, 104
 H = SCREEN + BEZEL
 
@@ -60,33 +62,39 @@ STYLE = """<style>
 }
 </style>"""
 
-LINES = (
-    ("l1", "[ OK ] mounting /lab/hydrate", crt.LAB),
-    ("l2", "[ OK ] loading litfamily.agents", crt.WORK),
-    ("l3", "[ OK ] link: ovito-mcp · pymol-mcp · claviscage", crt.TEXT),
-    ("l4", "wjgo@lab:~$ whoami", crt.TEXT),
-    ("l6", "Researcher · agent tool builder", crt.DIM),
-)
 
-
-def _name(x, y, size):
-    latin = "Woojin Go, Ph.D. · "
-    return crt.text(latin, "meslo-regular", size, x, y, crt.TEXT) + crt.text(
-        "고우진", "pretendard-regular", size, x + crt.width(latin, "meslo-regular", size), y, crt.TEXT
+def _lines(p):
+    return (
+        ("l1", "[ OK ] mounting /lab/hydrate", p.LAB),
+        ("l2", "[ OK ] loading litfamily.agents", p.WORK),
+        ("l3", "[ OK ] link: ovito-mcp · pymol-mcp · claviscage", p.TEXT),
+        ("l4", "wjgo@lab:~$ whoami", p.TEXT),
+        ("l6", "Researcher · agent tool builder", p.DIM),
     )
 
 
-def _nameplate():
-    raw = LOCKUP.read_text(encoding="utf-8")
+def _name(p, x, y, size):
+    latin = "Woojin Go, Ph.D. · "
+    return crt.text(latin, "meslo-regular", size, x, y, p.TEXT) + crt.text(
+        "고우진", "pretendard-regular", size, x + crt.width(latin, "meslo-regular", size), y, p.TEXT
+    )
+
+
+def _nameplate(theme):
+    spec = tokens.THEMES[theme]
+    raw = (ASSETS / spec["lockup"]).read_text(encoding="utf-8")
+    view = re.search(r'viewBox="([^"]+)"', raw).group(1)
     inner = raw.split(">", 1)[1].rsplit("</svg>", 1)[0]
-    # Uniform scale only: 300/1500 = 72/360 = 0.2. Clearspace stays inside the lockup.
+    inner = re.sub(r'<rect\b[^>]*fill="transparent"[^>]*/>\s*', "", inner)
+    # Uniform scale only. The box matches the night lockup; day letterboxes inside it.
     return (
         f'<svg id="nameplate" x="28" y="{SCREEN + 16}" width="300" height="72" '
-        f'viewBox="0 0 1500 360">{inner}</svg>'
+        f'viewBox="{view}" preserveAspectRatio="xMidYMid meet">{inner}</svg>'
     )
 
 
-def render():
+def render(theme="night"):
+    p = crt.Chrome(theme)
     size = 18
     x = 28
     first = 118
@@ -94,65 +102,77 @@ def render():
     parts = [
         crt.svg_open(W, H),
         STYLE,
-        crt.DEFS,
-        '<defs><linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1">'
-        '<stop offset="0" stop-color="#16181c"/><stop offset="1" stop-color="#1d2026"/>'
-        '</linearGradient><clipPath id="screen"><rect width="1200" height="420"/></clipPath></defs>',
+        p.DEFS,
+        "<defs>"
+        f'<linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1">'
+        f'<stop offset="0" stop-color="{p.t["bezel_top"]}"/>'
+        f'<stop offset="1" stop-color="{p.t["bezel_bottom"]}"/>'
+        f"</linearGradient>"
+        f'<clipPath id="screen"><rect width="1200" height="420"/></clipPath>'
+        "</defs>",
         '<g clip-path="url(#screen)">',
-        crt.screen(W, SCREEN),
-        crt.ticks(W, SCREEN, crt.LAB),
-        crt.coords(SCREEN),
-        crt.blocks(("TTY1", "PID 0x2A", "1200x420", "UTF-8"), crt.LAB),
-        f'<line x1="16" y1="30" x2="{W - 16}" y2="30" stroke="{crt.GRID}" stroke-width="1"/>',
-        f'<g filter="url(#bloom)">{crt.dot_text("WJGO // RESEARCH TERMINAL", 28, 40, 3, crt.LAB)}</g>',
-        f'<line x1="16" y1="78" x2="760" y2="78" stroke="{crt.GRID}" stroke-width="1"/>',
-        '<g filter="url(#bloom)">',
+        p.screen(W, SCREEN),
+        crt.ticks(W, SCREEN, p.LAB),
+        p.coords(SCREEN),
+        p.blocks(("TTY1", "PID 0x2A", "1200x420", "UTF-8"), p.LAB),
+        f'<line x1="16" y1="30" x2="{W - 16}" y2="30" stroke="{p.GRID}" stroke-width="1"/>',
+        p.bloom(crt.dot_text("WJGO // RESEARCH TERMINAL", 28, 40, 3, p.LAB)),
+        f'<line x1="16" y1="78" x2="760" y2="78" stroke="{p.GRID}" stroke-width="1"/>',
+        p.bloom(""),
     ]
-    row = 0
-    for cls, label, fill in LINES:
-        y = first + row * leading
-        parts.append(f'<g class="line {cls}">{crt.text(label, "meslo-regular", size, x, y, fill)}</g>')
-        row += 1
-        if cls == "l4":
-            parts.append(f'<g class="line l5">{_name(x, y + leading, size)}</g>')
-            row += 1
-    parts.append("</g>")
+    # bloom() on an empty string still opens a group when bloom is on. Build lines inside one group.
+    parts.pop()
+    parts.append(p.bloom("".join(_boot_lines(p, x, first, leading, size))))
+    row = len(_lines(p)) + 1
     cursor_y = first + row * leading
-    parts.append(f'<rect class="cursor" x="{x}" y="{cursor_y - 16}" width="11" height="18" fill="{crt.LAB}"/>')
-    parts.append(f'<g filter="url(#bloom)">{crt.cage(980, 188, 36, crt.LAB)}</g>')
-    parts.append(crt.text("5^12  CAGE", "meslo-regular", 12, 930, 318, crt.LAB))
-    parts.append(f'<line x1="16" y1="372" x2="{W - 16}" y2="372" stroke="{crt.GRID}" stroke-width="1"/>')
-    parts.append(crt.text("MEM", "meslo-regular", 13, 28, 396, crt.TEXT))
-    parts.append(crt.meter(64, 386, 92, crt.LAB, 5, 7))
-    parts.append(crt.text("71%   SYNC ● OK   LOC SEOUL·KR   MODE: HYDRATE/AGENTS", "meslo-regular", 13, 168, 396, crt.TEXT))
-    parts.append(
-        f'<rect class="sweep" x="860" y="0" width="280" height="3" fill="{crt.LAB}" opacity="0.35"/>'
-    )
+    parts.append(f'<rect class="cursor" x="{x}" y="{cursor_y - 16}" width="11" height="18" fill="{p.LAB}"/>')
+    parts.append(p.bloom(crt.cage(980, 188, 36, p.LAB)))
+    parts.append(crt.text("5^12  CAGE", "meslo-regular", 12, 930, 318, p.LAB))
+    parts.append(f'<line x1="16" y1="372" x2="{W - 16}" y2="372" stroke="{p.GRID}" stroke-width="1"/>')
+    parts.append(crt.text("MEM", "meslo-regular", 13, 28, 396, p.TEXT))
+    parts.append(p.meter(64, 386, 92, p.LAB, 5, 7))
+    parts.append(crt.text("71%   SYNC ● OK   LOC SEOUL·KR   MODE: HYDRATE/AGENTS", "meslo-regular", 13, 168, 396, p.TEXT))
+    parts.append(f'<rect class="sweep" x="860" y="0" width="280" height="3" fill="{p.LAB}" opacity="0.35"/>')
     parts.append("</g>")
     parts.append(
         f'<rect x="0" y="{SCREEN}" width="{W}" height="{BEZEL}" fill="url(#bezel)"/>'
-        f'<line x1="0" y1="{SCREEN}" x2="{W}" y2="{SCREEN}" stroke="#2a2e36" stroke-width="1"/>'
-        f'<line x1="0" y1="{H - 1}" x2="{W}" y2="{H - 1}" stroke="#0a0c10" stroke-width="1"/>'
+        f'<line x1="0" y1="{SCREEN}" x2="{W}" y2="{SCREEN}" stroke="{p.t["bezel_highlight"]}" stroke-width="1"/>'
+        f'<line x1="0" y1="{H - 1}" x2="{W}" y2="{H - 1}" stroke="{p.t["bezel_shadow"]}" stroke-width="1"/>'
     )
-    parts.append(_nameplate())
-    parts.append(f'<circle cx="760" cy="{SCREEN + 36}" r="4" fill="{crt.LAB}"/>')
-    parts.append(crt.text("PWR", "meslo-regular", 13, 772, SCREEN + 40, crt.DIM))
+    parts.append(_nameplate(theme))
+    parts.append(f'<circle cx="760" cy="{SCREEN + 36}" r="4" fill="{p.LAB}"/>')
+    parts.append(crt.text("PWR", "meslo-regular", 13, 772, SCREEN + 40, p.t["bezel_text"]))
     parts.append(
-        f'<circle cx="860" cy="{SCREEN + 36}" r="4" fill="none" stroke="{crt.DIM}" stroke-width="1.2"/>'
-        f'<circle class="hdd" cx="860" cy="{SCREEN + 36}" r="2.4" fill="{crt.DIM}"/>'
+        f'<circle cx="860" cy="{SCREEN + 36}" r="4" fill="none" stroke="{p.t["bezel_text"]}" stroke-width="1.2"/>'
+        f'<circle class="hdd" cx="860" cy="{SCREEN + 36}" r="2.4" fill="{p.t["bezel_text"]}"/>'
     )
-    parts.append(crt.text("HDD", "meslo-regular", 13, 872, SCREEN + 40, crt.DIM))
-    parts.append(crt.text("MODEL WJ-2023", "meslo-regular", 11, 760, SCREEN + 68, "#6d7580"))
+    parts.append(crt.text("HDD", "meslo-regular", 13, 872, SCREEN + 40, p.t["bezel_text"]))
+    parts.append(crt.text("MODEL WJ-2023", "meslo-regular", 11, 760, SCREEN + 68, p.t["bezel_label"]))
     for i in range(7):
         parts.append(
-            f'<rect x="{1040 + i * 10}" y="{SCREEN + 34}" width="3" height="22" fill="#101216"/>'
+            f'<rect x="{1040 + i * 10}" y="{SCREEN + 34}" width="3" height="22" fill="{p.t["bezel_vent"]}"/>'
         )
     parts.append("</svg>")
     return "".join(parts)
 
 
-def main():
-    OUT.write_text(render(), encoding="utf-8")
+def _boot_lines(p, x, first, leading, size):
+    bits = []
+    row = 0
+    for cls, label, fill in _lines(p):
+        y = first + row * leading
+        bits.append(f'<g class="line {cls}">{crt.text(label, "meslo-regular", size, x, y, fill)}</g>')
+        row += 1
+        if cls == "l4":
+            bits.append(f'<g class="line l5">{_name(p, x, y + leading, size)}</g>')
+            row += 1
+    return "".join(bits)
+
+
+def main(argv=None):
+    for theme in tokens.chosen(argv):
+        tokens.themed_path(OUT, theme).write_text(render(theme), encoding="utf-8")
+    tokens.retire_unthemed(OUT)
 
 
 if __name__ == "__main__":
