@@ -57,6 +57,49 @@ def test_max_count_is_the_tallest_column():
     assert all(float(height) < tallest for count, height in pairs if count != "40")
 
 
+def test_voxels_stack_to_the_level_and_settle_within_1_8s():
+    from scripts.motion import voxel_delay
+
+    weeks = [[0] * 7 for _ in range(53)]
+    weeks[0][0] = 3
+    weeks[4][2] = 9
+    weeks[8][1] = 40
+    svg = _render({"weeks": weeks, "start": "2025-11-02"}, "night")
+    assert 'id="v1"' in svg and 'id="v2"' in svg and 'id="v3"' in svg and 'id="v4"' in svg
+    uses = re.findall(r'<use\b[^>]*href="#v(\d)"[^>]*>', svg)
+    assert uses
+    by_level = {}
+    for level in uses:
+        by_level[level] = by_level.get(level, 0) + 1
+    # Levels from the quantile: 3 → 1 cube, 9 → 2 cubes, 40 → 4 cubes.
+    assert by_level == {"1": 1, "2": 2, "4": 4}
+    for tag in re.findall(r'<use\b[^>]*href="#v\d"[^>]*>', svg):
+        assert ' x="' in tag and ' y="' in tag
+    found = re.findall(r'class="([^"]*\bvoxel\b[^"]*)"', svg)
+    assert found
+    assert 'style="--d:' not in svg
+    delays = []
+    for classes in found:
+        col = int(re.search(r"\bc(\d+)\b", classes).group(1))
+        row = int(re.search(r"\br(\d+)\b", classes).group(1))
+        stack = int(re.search(r"\bs(\d+)\b", classes).group(1))
+        delays.append(voxel_delay(col, row, stack))
+    assert max(delays) <= 1.8
+    assert "360ms" in svg
+    assert "translate(0, -24px)" in svg
+    assert "cubic-bezier(0.34, 1.56, 0.64, 1)" not in svg
+
+
+def test_brand_ramp_colours():
+    from scripts.tokens import THEMES
+
+    model = _model()
+    for theme in ("night", "day"):
+        svg = _render(model, theme)
+        for color in THEMES[theme]["contrib"]:
+            assert f'fill="{color}"' in svg
+
+
 def test_reduced_motion_and_readout_contrast():
     model = _model()
     for theme in ("night", "day"):

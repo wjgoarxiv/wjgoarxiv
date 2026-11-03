@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import layout
+import motion
 import svgtext
 import tokens
 
@@ -36,27 +37,27 @@ def _ink(theme_name):
 
 def _label_ink(theme_name):
     if theme_name == "day":
-        return tokens.LOCKUP_LIGHT
+        return tokens.THEMES[theme_name]["text"]
     return tokens.THEMES[theme_name]["text"]
 
 
 def _size(badge_h):
-    if badge_h >= 32:
-        return 13
-    if badge_h >= 28:
+    if badge_h >= 24:
         return 12
+    if badge_h >= 20:
+        return 11
     return 10
 
 
-def render_badge(badge, live, theme_name, preset=None):
+def render_badge(badge, live, theme_name, preset=None, index=0):
     spec = layout.load(preset)
     badge_h = spec["badge_h"]
     theme = tokens.THEMES[theme_name]
     value = _value(badge, live)
     size = _size(badge_h)
-    pad = 6
-    dot = 3.0
-    label_text_x = pad + dot + 4
+    pad = 4 if badge_h <= 20 else 5
+    dot = 2.5 if badge_h <= 20 else 3.0
+    label_text_x = pad + dot + 3
     label_w = label_text_x + svgtext.text_width(badge["label"], FACE, size, 0) + pad
     value_w = svgtext.text_width(value, FACE, size, 0) + pad * 2
     width = round(label_w + value_w, 1)
@@ -69,11 +70,13 @@ def render_badge(badge, live, theme_name, preset=None):
     dot_y = round(badge_h / 2 - dot / 2, 2)
     label = svgtext.render(badge["label"], FACE, size, label_text_x, baseline, label_ink, 0)
     value_text = svgtext.render(value, FACE, size, label_w + pad, baseline, ink, 0)
+    wait = motion.delay_s(index, 0.04, motion.MOTION["badge_stagger_ms"] / 1000)
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{badge_h}" '
         f'viewBox="0 0 {width} {badge_h}">'
+        f"{motion.badge_style()}"
         f"<defs><clipPath id=\"badge\">"
-        f'<rect width="{width}" height="{badge_h}" rx="3" ry="3"/></clipPath></defs>'
+        f'<rect width="{width}" height="{badge_h}"/></clipPath></defs>'
         f'<g clip-path="url(#badge)">'
         f'<rect width="{label_w}" height="{badge_h}" fill="{theme["grid_soft"]}"/>'
         f'<rect class="value" x="{label_w}" width="{value_w}" height="{badge_h}" fill="{chip}"/>'
@@ -93,9 +96,9 @@ def write_badges(fixture, out_dir, preset=None, themes=None):
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for theme_name in themes or ("night", "day"):
-        for badge in badges:
+        for index, badge in enumerate(badges):
             dest = out_dir / f"{badge['id']}-{theme_name}.svg"
-            dest.write_text(render_badge(badge, live, theme_name, preset), encoding="utf-8")
+            dest.write_text(render_badge(badge, live, theme_name, preset, index), encoding="utf-8")
             written.append(dest)
     return written
 

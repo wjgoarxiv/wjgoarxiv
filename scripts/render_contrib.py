@@ -9,28 +9,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import crt
 import layout
+import motion
 import tokens
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "assets" / "contrib.svg"
 MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 ANCHOR = date(2025, 11, 2)
-
-STYLE = """<style>
-.rise { transform: none; }
-@media (prefers-reduced-motion: no-preference) {
-  .rise { transform-box: fill-box; transform-origin: 50% 100%; animation: rise 0.4s ease-out forwards; }
-  __DELAYS__
-}
-@keyframes rise {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .rise { animation: none !important; transform: none !important; }
-}
-</style>"""
-
 
 def _mix(left, right, amount):
     def channel(index):
@@ -79,11 +64,6 @@ def _poly(points):
     return head + "".join(f"L{x:.1f} {y:.1f}" for x, y in points[1:]) + "Z"
 
 
-def _delays(count):
-    step = 1.6 / max(count - 1, 1)
-    return "\n  ".join(f".w{index} {{ animation-delay: {index * step:.3f}s; }}" for index in range(count))
-
-
 def _dates(model, cols, rows):
     given = model.get("dates")
     if given:
@@ -95,21 +75,20 @@ def _dates(model, cols, rows):
     return grid
 
 
-def _ramp(theme, lab, bg):
-    """Four columns as (top, front, side). Top is the lightest face."""
-    if theme == "day":
-        light = "#e7f6c4"
-        deep = "#2c4a16"
-        tops = tuple(_mix(lab, light, amount) for amount in (0.64, 0.48, 0.32, 0.16))
-        return tuple((top, _mix(top, deep, 0.42), _mix(top, deep, 0.68), deep) for top in tops)
-    tops = (
-        _mix(_mix(lab, bg, 0.62), "#8a8f98", 0.35),
-        _mix(lab, bg, 0.46),
-        _mix(lab, bg, 0.22),
-        lab,
-    )
-    edge = "#07080c"
-    return tuple((top, _mix(top, bg, 0.32), _mix(top, edge, 0.42), edge) for top in tops)
+def _ramp(theme):
+    """Brand levels 0–4. The top face is the token; the other faces are the same hue, darker."""
+    toward = "#07080c" if theme == "night" else "#12141c"
+    faces = []
+    for color in tokens.THEMES[theme]["contrib"]:
+        faces.append(
+            (
+                color,
+                _mix(color, toward, 0.28),
+                _mix(color, toward, 0.48),
+                _mix(color, toward, 0.66),
+            )
+        )
+    return tuple(faces)
 
 
 def render_svg(model, theme="night", preset=None):
@@ -123,7 +102,7 @@ def render_svg(model, theme="night", preset=None):
     total = sum(count for week in weeks for count in week)
     dates = _dates(model, cols, rows)
     p = crt.Chrome(theme)
-    ramp = _ramp(theme, p.LAB, p.BG)
+    ramp = _ramp(theme)
     # Cabinet: weeks run on x, days recede up-right, columns rise straight up.
     week_pitch = 21.0
     box_w = 12.0
@@ -160,14 +139,47 @@ def render_svg(model, theme="night", preset=None):
                 x2, y2 = point(col, row + 1)
                 bonds.append(f"M{x:.1f} {y:.1f}L{x2:.1f} {y2:.1f}")
     floor = (
-        f'<path class="bond" d="{"".join(bonds)}" fill="none" stroke="{bond_ink}" '
+        f'<g class="floor"><path class="bond" d="{"".join(bonds)}" fill="none" stroke="{bond_ink}" '
         f'stroke-width="1.05" stroke-dasharray="1.6 1.7"/>'
     )
-    node_markup = "".join(nodes)
+    node_markup = "".join(nodes) + "</g>"
+    cube_h = column_unit
+    half = box_w / 2
+    dx, dy = depth
+    local_front = ((-half, 0.0), (half, 0.0), (half, -cube_h), (-half, -cube_h))
+    local_side = (
+        local_front[1],
+        (half + dx, dy),
+        (half + dx, -cube_h + dy),
+        local_front[2],
+    )
+    local_top = (
+        local_front[3],
+        local_front[2],
+        local_side[2],
+        (-half + dx, -cube_h + dy),
+    )
+    xs = [x for shape in (local_front, local_side, local_top) for x, _y in shape]
+    ys = [y for shape in (local_front, local_side, local_top) for _x, y in shape]
+    pad = 1.0
+    min_x, min_y = min(xs) - pad, min(ys) - pad
+    max_x, max_y = max(xs) + pad, max(ys) + pad
+    symbol_w, symbol_h = max_x - min_x, max_y - min_y
+    symbols = ['<defs>']
+    for level in range(1, 5):
+        top_c, front_c, side_c, edge = ramp[level]
+        stroke = f' stroke="{edge}" stroke-width="0.8" stroke-linejoin="miter"'
+        symbols.append(
+            f'<symbol id="v{level}" viewBox="{min_x:.1f} {min_y:.1f} {symbol_w:.1f} {symbol_h:.1f}" overflow="visible">'
+            f'<path fill="{side_c}"{stroke} d="{_poly(local_side)}"/>'
+            f'<path fill="{front_c}"{stroke} d="{_poly(local_front)}"/>'
+            f'<path class="top" fill="{top_c}"{stroke} d="{_poly(local_top)}"/>'
+            f"</symbol>"
+        )
+    symbols.append("</defs>")
     weeks_markup = ['<g class="lattice-still">']
     meta = []
     for col, week in enumerate(weeks):
-        faces = []
         for row in range(rows - 1, -1, -1):
             count = week[row]
             level = levels[col][row]
@@ -175,42 +187,27 @@ def render_svg(model, theme="night", preset=None):
                 continue
             px, py = point(col, row)
             rise = level * column_unit
-            left = px - box_w / 2
-            right = px + box_w / 2
-            front = (
-                (left, py),
-                (right, py),
-                (right, py - rise),
-                (left, py - rise),
-            )
-            side = (
-                front[1],
-                (right + depth[0], py + depth[1]),
-                (right + depth[0], py - rise + depth[1]),
-                front[2],
-            )
-            top = (
-                front[3],
-                front[2],
-                side[2],
-                (left + depth[0], py - rise + depth[1]),
-            )
-            top_c, front_c, side_c, edge = ramp[level - 1]
-            stroke = f' stroke="{edge}" stroke-width="0.8" stroke-linejoin="miter"'
-            faces.append(f'<path fill="{side_c}"{stroke} d="{_poly(side)}"/>')
-            faces.append(f'<path fill="{front_c}"{stroke} d="{_poly(front)}"/>')
-            faces.append(f'<path fill="{top_c}"{stroke} d="{_poly(top)}"/>')
-            meta.append(f'<g class="column" data-count="{count}" data-h="{rise:.1f}"></g>')
-        if faces:
-            weeks_markup.append(f'<g class="rise w{col}">{"".join(faces)}</g>')
+            cubes = []
+            for index in range(level):
+                floor_y = py - index * cube_h
+                classes = f"voxel c{col} r{row} s{index}"
+                if level == 4 and index == level - 1:
+                    classes += " peak"
+                cubes.append(
+                    f'<use href="#v{level}" x="{px + min_x:.1f}" y="{floor_y + min_y:.1f}" '
+                    f'width="{symbol_w:.1f}" height="{symbol_h:.1f}" class="{classes}"/>'
+                )
+            meta.append(f'<g class="column" data-count="{count}" data-h="{rise:.1f}" data-col="{col}" data-row="{row}"></g>')
+            weeks_markup.append("".join(cubes))
     weeks_markup.append("</g>")
-    title = "CONTRIB.LATTICE · last 52w"
-    total_label = f"TOTAL {total}"
-    streak_label = f"STREAK {_streak(weeks)} d"
+    title = "~/CONTRIB"
+    readout_size = 13
+    total_value = total
+    streak_value = _streak(weeks)
     legend = ['<g class="legend">']
     legend.append(crt.text("less", "meslo-regular", 11, 18, 46, p.TEXT))
     cursor = 18 + crt.width("less", "meslo-regular", 11) + 8
-    for level in range(4):
+    for level in range(5):
         legend.append(
             f'<rect x="{cursor:.1f}" y="36" width="9" height="9" fill="{ramp[level][0]}" stroke="{ramp[level][3]}" stroke-width="0.6"/>'
         )
@@ -228,28 +225,54 @@ def render_svg(model, theme="night", preset=None):
         label = MONTHS[int(stamp[5:7]) - 1]
         x, y = point(col, 0)
         months.append(crt.text(label, "meslo-regular", 11, x, y + 16, p.DIM))
+    total_label = "TOTAL "
+    streak_label = "STREAK "
+    suffix = " d"
+    total_w = crt.width(total_label, "meslo-regular", readout_size) + motion.reel_width(total_value, readout_size)
+    streak_w = (
+        crt.width(streak_label, "meslo-regular", readout_size)
+        + motion.reel_width(streak_value, readout_size)
+        + crt.width(suffix, "meslo-regular", readout_size)
+    )
+    total_x = width - 18 - total_w
+    streak_x = width - 18 - streak_w
+    total_clips, total_body, _total_used = motion.odometer(
+        total_value,
+        total_x + crt.width(total_label, "meslo-regular", readout_size),
+        19,
+        readout_size,
+        "total",
+        p.t["inverse_ink"],
+    )
+    streak_digits_x = streak_x + crt.width(streak_label, "meslo-regular", readout_size)
+    streak_clips, streak_body, streak_used = motion.odometer(
+        streak_value, streak_digits_x, 42, readout_size, "streak", p.TEXT
+    )
+    beam = (
+        f'<rect class="beam" x="0" y="58" width="28" height="{height - 78}" fill="{p.LAB}" opacity="0"/>'
+    )
     parts = [
         crt.svg_open(width, height),
-        STYLE.replace("__DELAYS__", _delays(cols)),
+        motion.contrib_style(readout_size, cols, rows),
         p.DEFS,
+        "".join(symbols),
+        f"<defs>{total_clips}{streak_clips}</defs>",
         p.screen(width, height),
-        crt.ticks(width, height, p.LAB),
+        p.plot_grid(width, height, 28),
         f'<g class="readout" fill="{p.TEXT}">',
-        crt.text(title, "meslo-bold", 15, 18, 24, p.TEXT),
-        crt.text(total_label, "meslo-regular", 13, width - 18 - crt.width(total_label, "meslo-regular", 13), 22, p.TEXT),
-        crt.text(
-            streak_label,
-            "meslo-regular",
-            13,
-            width - 18 - crt.width(streak_label, "meslo-regular", 13),
-            42,
-            p.TEXT,
-        ),
+        f'<rect x="0" y="0" width="{width}" height="28" fill="{p.t["inverse_bg"]}"/>',
+        crt.text(title, "meslo-regular", 14, 12, 19, p.t["inverse_ink"]),
+        crt.text(total_label, "meslo-regular", readout_size, total_x, 19, p.t["inverse_ink"]),
+        total_body,
+        crt.text(streak_label, "meslo-regular", readout_size, streak_x, 42, p.TEXT),
+        streak_body,
+        crt.text(suffix, "meslo-regular", readout_size, streak_digits_x + streak_used, 42, p.TEXT),
         "</g>",
         "".join(legend),
         floor,
         node_markup,
         "".join(weeks_markup),
+        beam,
         "".join(months),
         "".join(meta),
         "</svg>",

@@ -75,20 +75,40 @@ def test_hero_fixture_stars_in_manifest():
 def test_hero_nameplate():
     night = (ASSETS / "hero-night.svg").read_text(encoding="utf-8")
     day = (ASSETS / "hero-day.svg").read_text(encoding="utf-8")
-    dark = (ASSETS / "lockup-dark.svg").read_text(encoding="utf-8")
-    light = (ASSETS / "lockup-light.svg").read_text(encoding="utf-8")
-    night_plate = _plate(night)
-    day_plate = _plate(day)
-    assert re.search(r'<g id="wordmark" fill="#F3EFE7">.*?</g>', dark).group(0) in night
-    assert re.search(r'<g id="reverse-symbol"[^>]*>.*?</g>', dark).group(0) in night
-    assert re.search(r'<g id="wordmark" fill="#26282D">.*?</g>', light).group(0) in day
-    assert re.search(r'<g id="horizontal-symbol"[^>]*>.*?</g>', light).group(0) in day
-    for plate, fill in ((night_plate, "#F3EFE7"), (day_plate, "#26282D")):
+    module = "M28 28H88V61.84A40 40 0 0 0 61.84 88H28Z"
+    for hero, fill in ((night, "#c0caf5"), (day, "#1f2335")):
+        plate = _plate(hero)
         assert "filter=" not in plate
-        assert "url(#scan)" not in plate and "url(#dither)" not in plate and "url(#bloom)" not in plate
+        assert "linearGradient" not in plate and "radialGradient" not in plate
         assert f'fill="{fill}"' in plate
-    assert 'fill="transparent"' not in day_plate
-    assert 'width="1400"' not in day_plate
+        assert module in plate
+        assert "<circle" not in plate
+        assert hero.count('id="bezel-mark"') == 1
+        cap = float(re.search(r'data-cap="([0-9.]+)"', plate).group(1))
+        height = float(re.search(r'height="([0-9.]+)"', plate).group(1))
+        box = [float(part) for part in re.search(r'viewBox="([^"]+)"', plate).group(1).split()]
+        cap_px = height * cap / box[3]
+        assert 44 <= cap_px <= 56
+        plate_y = float(re.search(r'\by="([0-9.]+)"', plate).group(1))
+        mark = re.search(r'id="bezel-mark"[^>]*\by="([0-9.]+)"[^>]*\bheight="([0-9.]+)"', hero)
+        if mark is None:
+            mark = re.search(r'id="bezel-mark"[^>]*height="([0-9.]+)"[^>]*\by="([0-9.]+)"', hero)
+            mark_y, mark_h = float(mark.group(2)), float(mark.group(1))
+        else:
+            mark_y, mark_h = float(mark.group(1)), float(mark.group(2))
+        assert plate_y >= mark_y + mark_h - 1
+        assert 'data-copy="Woojin Go, Ph.D. · 고우진"' in hero
+        assert 'data-copy="Researcher · agent tool builder"' in hero
+        assert 'data-copy="$ whoami → woojin go"' in hero
+        assert 'class="boot" data-size="21"' in hero
+        clip = re.search(
+            r'id="ticker"><rect x="([0-9.]+)" y="([0-9.]+)" width="([0-9.]+)" height="([0-9.]+)"',
+            hero,
+        )
+        assert clip
+        left, width = float(clip.group(1)), float(clip.group(3))
+        assert left >= 64
+        assert left + width <= 1136
 
 
 def _shot_reduced(hero_name, png_name, background):
@@ -201,9 +221,9 @@ def test_hero_reduced_motion_shows_final_frame():
                         count += 1
             return count
 
-        # Default screen is 256 px. Name baseline 164, tagline 190. Glyphs sit above the baseline.
-        assert ink(148, 168) > 200, f"name line missing in {hero_name}"
-        assert ink(174, 194) > 200, f"tagline missing in {hero_name}"
+        # Boot lines sit above the bezel. whoami and the prompt must both be inked.
+        assert ink(70, 120) > 80, f"boot lines missing in {hero_name}"
+        assert ink(120, 180) > 80, f"prompt missing in {hero_name}"
 
 
 def test_panels_share_viewbox():

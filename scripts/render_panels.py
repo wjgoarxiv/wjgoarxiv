@@ -8,50 +8,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import cage
 import crt
 import layout
+import motion
 import tokens
 from render_cards import Glyphs
 
 ROOT = Path(__file__).resolve().parents[1]
 PANE_W = 600
 
-STYLE = """<style>
-.dot { animation: pulse 2.8s ease-in-out infinite; }
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.28; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .dot { animation: none; opacity: 1; }
-}
-.cage-spin { display: none; }
-.cage-still { display: inline; }
-@media (prefers-reduced-motion: no-preference) {
-  .cage-spin { display: inline; }
-  .cage-still { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cage-spin { display: none; }
-  .cage-still { display: inline; }
-}
-</style>"""
-
-
 def _box(preset):
     return PANE_W, layout.load(preset)["pane_h"]
 
 
-def _chrome(p, accent, title, cell, box_w, box_h):
+def _chrome(p, accent, title, cell, box_w, box_h, style):
+    bar = 28
     return "".join(
         (
             crt.svg_open(box_w, box_h),
-            STYLE,
+            style,
             p.DEFS,
             p.screen(box_w, box_h),
-            crt.ticks(box_w, box_h, accent),
-            p.blocks(("TTY1", "PID 0x2A", "UTF-8"), accent),
-            f'<line x1="14" y1="30" x2="{box_w - 14}" y2="30" stroke="{p.GRID}" stroke-width="1"/>',
-            p.bloom(crt.dot_text(title, 18, 38, cell, accent)),
-            f'<circle class="dot" cx="{box_w - 18}" cy="16" r="3.5" fill="{accent}"/>',
+            p.plot_grid(box_w, box_h, bar),
+            f'<rect x="0" y="0" width="{box_w}" height="{bar}" fill="{p.t["inverse_bg"]}"/>',
+            crt.text(f"~/{title}", "meslo-regular", 14, 12, 19, p.t["inverse_ink"]),
         )
     )
 
@@ -135,21 +113,34 @@ def render_lab(theme="night", preset=None):
         "MD & clathrate cage analysis",
         "process sim · HYSYS / Multiflash",
     )
-    parts = [_chrome(p, p.LAB, "LAB", 4, box_w, box_h)]
+    parts = [_chrome(p, p.LAB, "LAB", 4, box_w, box_h, motion.lab_style())]
     parts.append(cage.sprite(cx, cy, scale, p.LAB))
-    parts.append(_notation(glyphs, cx, cage_bottom + 18, p.DIM))
+    parts.append(
+        f'<g class="lab-in" style="--d:0.46s">{_notation(glyphs, cx, cage_bottom + 18, p.DIM)}</g>'
+    )
     tag_width = split - 28
-    for text, y in zip(rows, tag_ys):
-        parts.append(glyphs.text(_fit(text, "meslo-regular", 12, tag_width), "meslo-regular", 12, 16, y, p.TEXT))
+    step = motion.MOTION["stagger_ms"] / 1000
+    for index, (text, y) in enumerate(zip(rows, tag_ys)):
+        wait = motion.delay_s(index, 0.52, step)
+        parts.append(
+            f'<g class="lab-in" style="--d:{wait:.2f}s">'
+            + glyphs.text(_fit(text, "meslo-regular", 12, tag_width), "meslo-regular", 12, 16, y, p.TEXT)
+            + "</g>"
+        )
     max_line = box_w - 32
-    for paper, y in zip(newest, paper_ys):
+    for index, (paper, y) in enumerate(zip(newest, paper_ys)):
         line = _fit(
             f"{paper['year']} · {paper['full_venue']} · {paper['title']}",
             "meslo-regular",
             13,
             max_line,
         )
-        parts.append(glyphs.text(line, "meslo-regular", 13, 16, y, p.LAB))
+        wait = motion.delay_s(index, 0.84, step)
+        parts.append(
+            f'<g class="lab-in" style="--d:{wait:.2f}s">'
+            + glyphs.text(line, "meslo-regular", 13, 16, y, p.LAB)
+            + "</g>"
+        )
     parts.append(f'<line x1="14" y1="{rule_y}" x2="{box_w - 14}" y2="{rule_y}" stroke="{p.GRID}" stroke-width="1"/>')
     latin = "Ph.D. UNIST 2023 · "
     parts.append(glyphs.text(latin, "meslo-regular", 13, 16, footer_y, p.DIM))
@@ -174,17 +165,18 @@ def _group_accent(chrome, group):
     return {"litfamily": chrome.WORK, "science/mcp": chrome.LAB, "env": chrome.ENV}[group]
 
 
-def _workshop_row(parts, glyphs, p, project, accent, x, right, y, size):
-    parts.append(f'<rect x="{x:.1f}" y="{y - size + 3:.1f}" width="7" height="7" fill="{accent}"/>')
+def _workshop_row(glyphs, p, project, accent, x, right, y, size):
     flag = "label" if project.get("label_only") else project["status"]
     flag_fill = p.DIM if project.get("label_only") else accent
     flag_w = crt.width(flag, "meslo-regular", size)
     flag_x = right - flag_w
     name_w = flag_x - (x + 14) - 8
-    parts.append(
-        glyphs.text(_fit(project["name"], "meslo-regular", size, name_w), "meslo-regular", size, x + 14, y, p.TEXT)
+    body = (
+        f'<rect class="dot" x="{x:.1f}" y="{y - size + 3:.1f}" width="7" height="7" fill="{accent}"/>'
+        + glyphs.text(_fit(project["name"], "meslo-regular", size, name_w), "meslo-regular", size, x + 14, y, p.TEXT)
+        + glyphs.text(flag, "meslo-regular", size, flag_x, y, flag_fill)
     )
-    parts.append(glyphs.text(flag, "meslo-regular", size, flag_x, y, flag_fill))
+    return y, x, body
 
 
 def render_workshop(theme="night", preset=None):
@@ -205,24 +197,29 @@ def render_workshop(theme="night", preset=None):
     room = rule_y - 10 - top
     lead = room / max(left_slots, right_slots)
     size = 15 if lead >= 17 else 14
-    parts = [_chrome(p, p.WORK, "WORKSHOP", 3, box_w, box_h)]
+    parts = [_chrome(p, p.WORK, "WORKSHOP", 3, box_w, box_h, motion.workshop_style())]
     left = 16
     mid = box_w * 0.38
     right_x = mid + 16
+    rows = []
     y_left = top + lead
-    parts.append(glyphs.text("litfamily", "meslo-bold", size, left, y_left, p.WORK))
+    rows.append((y_left, left, glyphs.text("litfamily", "meslo-bold", size, left, y_left, p.WORK)))
     y_left += lead
     for project in grouped["litfamily"]:
-        _workshop_row(parts, glyphs, p, project, p.WORK, left, mid - 10, y_left, size)
+        rows.append(_workshop_row(glyphs, p, project, p.WORK, left, mid - 10, y_left, size))
         y_left += lead
     y_right = top + lead
-    for key, rows in (("science/mcp", science), ("env", grouped["env"])):
+    for key, grouped_rows in (("science/mcp", science), ("env", grouped["env"])):
         accent = _group_accent(p, key)
-        parts.append(glyphs.text(key, "meslo-bold", size, right_x, y_right, accent))
+        rows.append((y_right, right_x, glyphs.text(key, "meslo-bold", size, right_x, y_right, accent)))
         y_right += lead
-        for project in rows:
-            _workshop_row(parts, glyphs, p, project, accent, right_x, box_w - 16, y_right, size)
+        for project in grouped_rows:
+            rows.append(_workshop_row(glyphs, p, project, accent, right_x, box_w - 16, y_right, size))
             y_right += lead
+    step = 0.08
+    for index, (_y, _x, body) in enumerate(sorted(rows, key=lambda item: (item[0], item[1]))):
+        wait = motion.delay_s(index, 0.08, step)
+        parts.append(f'<g class="row" style="--d:{wait:.3f}s">{body}</g>')
     parts.append(f'<line x1="14" y1="{rule_y}" x2="{box_w - 14}" y2="{rule_y}" stroke="{p.GRID}" stroke-width="1"/>')
     parts.append(glyphs.text("LINK ● AGENTS    QUEUE 0", "meslo-regular", 13, 16, footer_y, p.DIM))
     names = "|".join(project["name"] for project in projects)

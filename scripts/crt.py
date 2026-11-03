@@ -195,6 +195,7 @@ class Chrome:
         self.t = tokens.THEMES[theme]
         self.BG = self.t["screen_bg"]
         self.GRID = self.t["grid"]
+        self.border = self.t["border"]
         self.BORDER = self.t["border"]
         self.TEXT = self.t["text"]
         self.DIM = self.t["text_dim"]
@@ -206,46 +207,42 @@ class Chrome:
 
     def _defs(self):
         t = self.t
-        bloom = ""
-        if float(t["bloom_opacity"]) > 0:
-            bloom = (
-                f'<filter id="bloom" x="-12%" y="-50%" width="124%" height="200%">'
-                f'<feGaussianBlur in="SourceGraphic" stdDeviation="{t["bloom_blur"]}" result="blur"/>'
-                f'<feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 {t["bloom_opacity"]} 0" result="glow"/>'
-                f"<feMerge><feMergeNode in=\"glow\"/><feMergeNode in=\"SourceGraphic\"/></feMerge>"
-                f"</filter>"
-            )
         return (
             "<defs>"
             f'<pattern id="scan" width="3" height="3" patternUnits="userSpaceOnUse">'
             f'<rect y="2" width="3" height="1" fill="{t["scan"]}" opacity="{t["scan_opacity"]}"/>'
             f"</pattern>"
-            f'<pattern id="dither" width="4" height="4" patternUnits="userSpaceOnUse">'
-            f'<rect width="1" height="1" fill="{t["dither"]}" opacity="{t["dither_opacity"]}"/>'
-            f'<rect x="2" y="2" width="1" height="1" fill="{t["dither"]}" opacity="{t["dither_opacity_alt"]}"/>'
-            f"</pattern>"
-            f'<radialGradient id="vig" cx="50%" cy="42%" r="68%">'
-            f'<stop offset="58%" stop-color="{t["vig"]}" stop-opacity="0"/>'
-            f'<stop offset="100%" stop-color="{t["vig"]}" stop-opacity="{t["vig_opacity"]}"/>'
-            f"</radialGradient>"
-            f"{bloom}"
             "</defs>"
         )
 
     def bloom(self, markup):
-        if float(self.t["bloom_opacity"]) <= 0:
-            return markup
-        return f'<g filter="url(#bloom)">{markup}</g>'
+        return markup
 
-    def screen(self, box_w, box_h):
-        return (
-            f'<rect width="{box_w}" height="{box_h}" fill="{self.BG}"/>'
-            f'<rect width="{box_w}" height="{box_h}" fill="url(#scan)"/>'
-            f'<rect width="{box_w}" height="{box_h}" fill="url(#dither)"/>'
-            f'<rect width="{box_w}" height="{box_h}" fill="url(#vig)"/>'
+    def screen(self, box_w, box_h, scan=False):
+        parts = [f'<rect width="{box_w}" height="{box_h}" fill="{self.BG}"/>']
+        if scan:
+            parts.append(f'<rect width="{box_w}" height="{box_h}" fill="url(#scan)"/>')
+        parts.append(
             f'<rect x="0.5" y="0.5" width="{box_w - 1}" height="{box_h - 1}" fill="none" '
-            f'stroke="{self.GRID}" stroke-width="1"/>'
+            f'stroke="{self.border}" stroke-width="1"/>'
         )
+        return "".join(parts)
+
+    def plot_grid(self, box_w, box_h, top=32):
+        minor = self.t["grid"]
+        major = self.t["grid_major"]
+        bits = []
+        x = 32
+        while x < box_w:
+            color = major if x % 160 == 0 else minor
+            bits.append(f'<line x1="{x}" y1="{top}" x2="{x}" y2="{box_h}" stroke="{color}" stroke-width="1"/>')
+            x += 32
+        y = top
+        while y < box_h:
+            color = major if (y - top) % 160 == 0 else minor
+            bits.append(f'<line x1="0" y1="{y}" x2="{box_w}" y2="{y}" stroke="{color}" stroke-width="1"/>')
+            y += 32
+        return "".join(bits)
 
     def coords(self, box_h, x=6):
         bits = []

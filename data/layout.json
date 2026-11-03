@@ -6,21 +6,21 @@
       "hero_h": 300,
       "pane_h": 300,
       "contrib_h": 240,
-      "badge_h": 24
+      "badge_h": 18
     },
     "default": {
       "width": 1200,
       "hero_h": 360,
       "pane_h": 340,
       "contrib_h": 300,
-      "badge_h": 28
+      "badge_h": 20
     },
     "tall": {
       "width": 1200,
       "hero_h": 440,
       "pane_h": 420,
       "contrib_h": 380,
-      "badge_h": 32
+      "badge_h": 24
     }
   }
 }

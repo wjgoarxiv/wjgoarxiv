@@ -35,6 +35,20 @@ def _height(svg):
     return float(match.group(1))
 
 
+def test_default_badge_height_is_20():
+    from scripts.layout import load
+    from scripts.render_badges import render_badge
+
+    assert load()["badge_h"] == 20
+    assert load("compact")["badge_h"] == 18
+    assert load("tall")["badge_h"] == 24
+    live = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    badge = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))[0]
+    svg = render_badge(badge, live, "night")
+    assert _height(svg) == 20
+    assert "scale(0.011)" in svg
+
+
 def test_fixture_stars_height_contrast_hosts_and_files(tmp_path):
     from scripts.layout import load
     from scripts.render_badges import write_badges

@@ -1,0 +1,2 @@
+Meslo LG is distributed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
+This file is the "MesloLGS NF" build patched by Nerd Fonts (MIT); the files here are Latin subsets.

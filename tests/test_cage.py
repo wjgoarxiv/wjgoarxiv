@@ -49,6 +49,31 @@ def _frames(svg):
     return distinct
 
 
+def test_cage_edges_are_bold_and_glassy():
+    from scripts.render_panels import render_lab
+
+    svg = render_lab("night")
+    still, spin = svg.split('class="cage-still"', 1)[1].split('class="cage-spin"', 1)
+    widths = [
+        float(part)
+        for values in re.findall(r'attributeName="stroke-width"[^>]*values="([^"]+)"', spin)
+        for part in values.split(";")
+    ]
+    assert widths
+    assert max(widths) >= 2.6
+    assert max(widths) <= 3.2
+    assert min(widths) >= 1.2
+    assert min(widths) <= 1.6
+    panes = re.findall(r'class="pane"[^>]*fill-opacity="([0-9.]+)"', still)
+    assert len(panes) == 14
+    assert all(0.05 <= float(value) <= 0.14 for value in panes)
+    assert still.count('class="core"') == 36
+    assert 'stroke-width="0.8"' in still
+    assert 'class="glint"' in still
+    assert "linearGradient" not in svg and "radialGradient" not in svg and "<filter" not in svg
+    assert 'attributeName="fill-opacity"' in spin
+
+
 def test_lab_frames_static_group_papers_and_size(tmp_path):
     from scripts.render_panels import render_lab
 
@@ -63,10 +88,11 @@ def test_lab_frames_static_group_papers_and_size(tmp_path):
         assert 'class="cage-still"' in svg
         assert "prefers-reduced-motion" in svg
         assert len(_frames(svg)) >= 3
-        assert 'dur="12s"' in svg
+        assert 'dur="8s"' in svg
         assert 'calcMode="linear"' in svg
-        assert svg.count('attributeName="d"') == 36
-        assert svg.count('attributeName="stroke-opacity"') == 36
-        assert svg.count('attributeName="cx"') == 24
+        assert svg.count('id="cage-e') == 36
+        assert svg.count('attributeName="d"') == 50
+        assert svg.count('attributeName="stroke-opacity"') == 72
+        assert svg.count('attributeName="cx"') == 25
         for paper in newest:
             assert f"{paper['year']}:{paper['slug']}" in svg

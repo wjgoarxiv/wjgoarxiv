@@ -44,10 +44,14 @@ def test_readme_contract():
         assert img.group(1) == night.group(1)
     assert "lockup-dark.svg" not in text
     assert "lockup-light.svg" not in text
-    assert "Woojin Go, Ph.D." in text
-    assert "Researcher and agent tool builder" in text
+    assert "whoami" in text
     assert "nameplate" in text
-    assert "EOT" in text
+    assert "assets/footer-night.svg" in text
+    assert "assets/footer-day.svg" in text
+    assert "── EOT ──" not in text
+    preview = (ROOT / "scripts" / "filmstrip.mjs").read_text(encoding="utf-8")
+    assert "── EOT ──" not in preview
+    assert "footer-${theme}.svg" in preview
     projects = json.loads((ROOT / "data" / "projects.json").read_text(encoding="utf-8"))
     papers = json.loads((ROOT / "data" / "papers.json").read_text(encoding="utf-8"))
     for project in projects:
@@ -104,7 +108,7 @@ def test_folds_badges_contrib_and_orphans():
     referenced = set(re.findall(r'(?:src|srcset)="([^"]+)"', text))
     for svg in (ROOT / "assets").rglob("*.svg"):
         rel = svg.relative_to(ROOT).as_posix()
-        if rel.startswith("assets/atlas/") or "lockup-" in rel:
+        if rel.startswith("assets/atlas/") or rel.startswith("assets/brand/") or "lockup-" in rel:
             continue
         assert rel in referenced, rel
 

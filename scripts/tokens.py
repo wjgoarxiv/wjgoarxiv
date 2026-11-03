@@ -1,83 +1,86 @@
-"""Theme tokens. Hex values are resolved folke/tokyonight extras.
-
-Source: extras/lua/tokyonight_night.lua and extras/lua/tokyonight_day.lua
-(the day extra is the inverted storm/moon result, not the raw day.lua stub).
-"""
+"""Terminalcore role colours. Names stay the ones the renderers already call."""
 
 import argparse
 from pathlib import Path
 
-LOCKUP_DARK = "#F3EFE7"
-LOCKUP_LIGHT = "#26282D"
-
-# Semantic roles. Texture keys are intensity, not a second palette.
 THEMES = {
     "night": {
-        "screen_bg": "#1a1b26",  # bg
-        "screen_bg_alt": "#16161e",  # bg_dark
-        "grid": "#414868",  # terminal_black
-        "border": "#414868",  # terminal_black
-        "grid_soft": "#292e42",  # bg_highlight
-        "text": "#c0caf5",  # fg
-        "text_dim": "#a9b1d6",  # fg_dark
-        "lab": "#9ece6a",  # green
-        "workshop": "#7aa2f7",  # blue
-        "accent2": "#7dcfff",  # cyan
-        "env": "#a9b1d6",  # fg_dark
-        "warn": "#e0af68",  # yellow
-        "bezel_top": "#16181c",
-        "bezel_bottom": "#1d2026",
-        "bezel_highlight": "#2a2e36",
-        "bezel_shadow": "#0a0c10",
-        "bezel_label": "#6d7580",
-        "bezel_text": "#8ea3bb",
-        "bezel_vent": "#101216",
-        "scan": "#000000",
-        "scan_opacity": "0.34",
-        "dither": "#c0caf5",
-        "dither_opacity": "0.07",
-        "dither_opacity_alt": "0.045",
-        "vig": "#000000",
-        "vig_opacity": "0.50",
-        "bloom_opacity": "0.85",
-        "bloom_blur": "2.4",
-        "lockup": "lockup-dark.svg",
-        "lockup_fill": LOCKUP_DARK,
+        "page": "#16161e",
+        "screen_bg": "#1a1b26",
+        "screen_bg_alt": "#16161e",
+        "sunken": "#101018",
+        "grid": "#1f2233",
+        "grid_major": "#292e42",
+        "border": "#3b4261",
+        "grid_soft": "#292e42",
+        "text": "#c0caf5",
+        "text_dim": "#a9b1d6",
+        "label": "#8089b3",
+        "lab": "#9ece6a",
+        "workshop": "#7aa2f7",
+        "accent2": "#7dcfff",
+        "env": "#8089b3",
+        "warn": "#e0af68",
+        "negative": "#f7768e",
+        "signal": "#7aa2f7",
+        "phosphor": "#9ece6a",
+        "cyan": "#7dcfff",
+        "bezel_top": "#101018",
+        "bezel_bottom": "#101018",
+        "bezel_highlight": "#292e42",
+        "bezel_shadow": "#16161e",
+        "bezel_label": "#8089b3",
+        "bezel_text": "#a9b1d6",
+        "bezel_vent": "#1f2233",
+        "scan": "#c0caf5",
+        "scan_opacity": "0.055",
+        "dither": "#2b3150",
+        "dither_opacity": "0.055",
+        "dither_opacity_alt": "0.055",
+        "inverse_bg": "#c0caf5",
+        "inverse_ink": "#16161e",
+        "contrib": ("#292e42", "#1f2a4a", "#565f89", "#7aa2f7", "#9ece6a"),
+        "lockup": "brand/lockup-night.svg",
+        "lockup_fill": "#c0caf5",
     },
     "day": {
-        "screen_bg": "#e1e2e7",  # bg
-        "screen_bg_alt": "#d0d5e3",  # bg_dark
-        "grid": "#a1a6c5",  # terminal_black
-        "border": "#8990b3",  # dark3 — terminal_black is 1.85:1 and drops the frame
-        "grid_soft": "#c4c8da",  # bg_highlight
-        "text": "#3760bf",  # fg
-        # blue5, not fg_dark: fg_dark is 3.57:1 on day bg, under 4.5 for small type.
-        "text_dim": "#006a83",  # blue5
-        "lab": "#587539",  # green
-        # blue1, not blue: named blue is 3.11:1 and sits on top of fg.
-        "workshop": "#188092",  # blue1
-        "accent2": "#007197",  # cyan
-        # blue5, not fg_dark: fg_dark is 3.57:1 and the dot-matrix ENV bar disappears.
-        "env": "#006a83",  # blue5
-        "warn": "#b15c00",  # orange
-        "bezel_top": "#e0dcd4",
-        "bezel_bottom": "#c8c4bc",
-        "bezel_highlight": "#eeeae3",
-        "bezel_shadow": "#9e998f",
-        "bezel_label": "#5c574e",
-        "bezel_text": "#4a463f",
-        "bezel_vent": "#b3aea4",
-        "scan": "#3760bf",
-        "scan_opacity": "0.08",
-        "dither": "#6172b0",
-        "dither_opacity": "0.035",
-        "dither_opacity_alt": "0.02",
-        "vig": "#1a1b26",
-        "vig_opacity": "0.08",
-        "bloom_opacity": "0",
-        "bloom_blur": "0",
-        "lockup": "lockup-light.svg",
-        "lockup_fill": LOCKUP_LIGHT,
+        "page": "#e1e2e7",
+        "screen_bg": "#eceef3",
+        "screen_bg_alt": "#e1e2e7",
+        "sunken": "#d0d5e3",
+        "grid": "#d0d5e3",
+        "grid_major": "#b6bdd3",
+        "border": "#3760bf",
+        "grid_soft": "#b6bdd3",
+        "text": "#1f2335",
+        "text_dim": "#343b58",
+        "label": "#4c5585",
+        "lab": "#3d6b1f",
+        "workshop": "#2459c9",
+        "accent2": "#005f80",
+        "env": "#4c5585",
+        "warn": "#7a5200",
+        "negative": "#c0174a",
+        "signal": "#2459c9",
+        "phosphor": "#3d6b1f",
+        "cyan": "#005f80",
+        "bezel_top": "#d0d5e3",
+        "bezel_bottom": "#d0d5e3",
+        "bezel_highlight": "#b6bdd3",
+        "bezel_shadow": "#e1e2e7",
+        "bezel_label": "#4c5585",
+        "bezel_text": "#343b58",
+        "bezel_vent": "#d0d5e3",
+        "scan": "#1f2335",
+        "scan_opacity": "0.055",
+        "dither": "#b6bdd3",
+        "dither_opacity": "0.055",
+        "dither_opacity_alt": "0.055",
+        "inverse_bg": "#1f2335",
+        "inverse_ink": "#e1e2e7",
+        "contrib": ("#d0d5e3", "#d5e1f7", "#5d6aa3", "#2459c9", "#3d6b1f"),
+        "lockup": "brand/lockup-day.svg",
+        "lockup_fill": "#1f2335",
     },
 }
 
