@@ -17,7 +17,7 @@ DOIS = (
     "10.1016/j.apenergy.2024.123523",
     "10.1016/j.cej.2024.157251",
 )
-BANNED_HOSTS = ("shields.io", "vercel.app", "demolab.com", "capsule-render", "komarev.com", "wakatime")
+BANNED_HOSTS = ("shields.io", "github-readme-stats", "demolab.com", "capsule-render", "komarev.com", "wakatime")
 PRIVATE = ("wjgoarxiv/claviscage", "wjgoarxiv/hysys-companion)")
 
 
@@ -81,7 +81,7 @@ SUMMARIES = (
     "<summary><samp>/papers · 5</samp></summary>",
 )
 V1_LINKS = (
-    "https://woojingo.notion.site",
+    "https://woojingo.vercel.app/",
     "https://scholar.google.com/citations?user=V95iNggAAAAJ",
     "https://orcid.org/0000-0003-4021-8621",
     "https://www.linkedin.com/in/woojingo/",
@@ -223,6 +223,19 @@ def test_footer_has_no_licence_line():
         assert "<text" not in svg.lower()
         assert 'width="280"' in svg and 'height="28"' in svg
         assert capital_o not in svg
+
+
+def test_footer_links_to_the_homepage():
+    text = README.read_text(encoding="utf-8")
+    assert "notion.site" not in text
+    assert re.search(
+        r'<a href="https://woojingo\.vercel\.app/"><picture>(?:(?!</picture>).)*footer-night\.svg.*?</picture></a>',
+        text,
+        re.DOTALL,
+    )
+    badges = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))
+    homepage = next(badge for badge in badges if badge["id"] == "homepage")
+    assert homepage["url"] == "https://woojingo.vercel.app/"
 
 
 def test_shields_in_a_copy_fails(tmp_path):

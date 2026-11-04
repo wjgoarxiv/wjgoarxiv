@@ -47,8 +47,8 @@
   {
     "id": "homepage",
     "label": "homepage",
-    "value": "woojingo.notion.site",
-    "url": "https://woojingo.notion.site",
+    "value": "woojingo.vercel.app",
+    "url": "https://woojingo.vercel.app/",
     "group": "link",
     "row": 2,
     "w": 103

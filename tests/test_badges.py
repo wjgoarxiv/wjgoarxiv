@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-BANNED = ("shields.io", "vercel", "demolab", "komarev", "wakatime", "capsule-render")
+BANNED = ("shields.io", "github-readme-stats", "demolab", "komarev", "wakatime", "capsule-render")
 FIXTURE = ROOT / "tests" / "fixtures" / "live.json"
 
 
