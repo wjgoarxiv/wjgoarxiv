@@ -14,21 +14,19 @@ html, body { margin: 0; }
 body.dark { background: #0d1117; color: #e6edf3; }
 .markdown-body {
   box-sizing: border-box;
-  width: min(838px, 100%);
+  width: min(846px, 100%);
   margin: 24px auto;
-  padding: 0 16px 48px;
+  padding: 0 0 48px;
   font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
 }
+.markdown-body p { margin-top: 0; margin-bottom: 16px; }
 .markdown-body img, .markdown-body svg { max-width: 100%; height: auto; }
-.markdown-body img[width="49%"], .markdown-body svg.pane { width: 49%; }
+.markdown-body img[width="50%"], .markdown-body svg.pane { width: 50%; }
 .markdown-body img[width="100%"], .markdown-body svg.full { width: 100%; }
 .markdown-body a { color: #4493f8; text-decoration: none; }
 .markdown-body details { margin: 12px 0; }
 .markdown-body summary { cursor: pointer; }
-.badges { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
-.badges img { height: 20px; max-width: 100%; }
-.badges br { flex-basis: 100%; height: 0; }
-.row { display: flex; gap: 8px; justify-content: center; align-items: flex-start; }
+.row { display: flex; flex-wrap: nowrap; gap: 0; justify-content: flex-start; align-items: flex-start; }
 `;
 
 function inline(file, className) {

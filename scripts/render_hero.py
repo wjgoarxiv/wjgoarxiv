@@ -14,6 +14,7 @@ import tokens
 OUT = Path(__file__).resolve().parents[1] / "assets" / "hero.svg"
 ASSETS = OUT.parent
 BEZEL = 104
+BEZEL_MARK_W = 20
 
 def _lines(p):
     return (
@@ -42,8 +43,16 @@ def _nameplate(theme, screen_h):
             height = width * vb_h / vb_w
     y = screen_h + 32
     inner = raw.split(">", 1)[1].rsplit("</svg>", 1)[0]
+    # The module's left ink sits at local x=28, inset from the lockup viewBox origin.
+    placed = re.search(
+        r'transform="translate\(([-\d.]+) [-\d.]+\)"><g transform="translate\(([-\d.]+) [-\d.]+\) scale\(([-\d.]+)\)"',
+        raw,
+    )
+    shift, inner_x, scale = (float(part) for part in placed.groups())
+    ink = 28 * scale + inner_x + shift
+    x = layout.INSET - (ink - _x) * (width / vb_w)
     return (
-        f'<svg id="nameplate" x="16" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" '
+        f'<svg id="nameplate" x="{x:.2f}" y="{y:.1f}" width="{width:.1f}" height="{height:.1f}" '
         f'viewBox="{view}" data-cap="{cap:.0f}" preserveAspectRatio="xMidYMid meet">{inner}</svg>'
     )
 
@@ -71,7 +80,7 @@ def render(theme="night", preset=None, model=None):
     model = _load_model(model)
     p = crt.Chrome(theme)
     size, leading, first = _boot_layout(screen_h)
-    status_x = 44
+    status_x = layout.INSET + BEZEL_MARK_W + 10
     status_size = _status_size(model, out_w, status_x)
     x = 28
     status_defs, status_body = _status(p, model, screen_h, out_w, status_size, status_x)
@@ -276,7 +285,7 @@ def _bezel_mark(theme, screen_h):
     raw = (ASSETS / "brand" / f"symbol-{theme}.svg").read_text(encoding="utf-8")
     inner = raw.split(">", 1)[1].rsplit("</svg>", 1)[0]
     return (
-        f'<svg id="bezel-mark" x="12" y="{screen_h + 6}" width="20" height="20" '
+        f'<svg id="bezel-mark" x="{layout.INSET}" y="{screen_h + 6}" width="{BEZEL_MARK_W}" height="20" '
         f'viewBox="28 28 144 144">{inner}</svg>'
     )
 

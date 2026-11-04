@@ -10,7 +10,6 @@ from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import crt
 import motion
 import svgtext
 import tokens
@@ -166,15 +165,32 @@ def symbol_svg(theme):
     )
 
 
+FOOTER_W, FOOTER_H = 560, 52
+LICENCE = "Outlined glyphs: Pretendard (OFL) and Meslo. See LICENSES/."
+
+
 def footer_svg(theme):
     spec = tokens.THEMES[theme]
     ink = spec["label"]
-    prompt = svgtext.render("~/", "meslo-regular", 14, 28, 20, spec["phosphor"], 0)
-    rest = svgtext.render("woojin-go", "meslo-regular", 14, 28 + crt.width("~/", "meslo-regular", 14), 20, ink, 0)
+    scale = 0.111
+    mark_left, mark_right = 28, 172
+    mark_w = (mark_right - mark_left) * scale
+    gap = 28 - (2 + mark_right * scale)
+    prompt, rest = "~/", "woojin-go"
+    line_w = svgtext.text_width(prompt + rest, "meslo-regular", 14, 0)
+    origin = (FOOTER_W - (mark_w + gap + line_w)) / 2
+    text_x = origin + mark_w + gap
+    prompt_svg = svgtext.render(prompt, "meslo-regular", 14, text_x, 22, spec["phosphor"], 0)
+    rest_x = text_x + svgtext.text_width(prompt, "meslo-regular", 14, 0)
+    rest_svg = svgtext.render(rest, "meslo-regular", 14, rest_x, 22, ink, 0)
+    licence_w = svgtext.text_width(LICENCE, "meslo-regular", 11, 0)
+    licence = svgtext.render(LICENCE, "meslo-regular", 11, (FOOTER_W - licence_w) / 2, 42, ink, 0)
     return (
-        '<svg xmlns="http://www.w3.org/2000/svg" width="280" height="28" viewBox="0 0 280 28">'
-        f'<g transform="translate(2 2) scale(0.111)">{symbol_markup("ft", ink)}</g>'
-        f"{prompt}{rest}</svg>"
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{FOOTER_W}" height="{FOOTER_H}" '
+        f'viewBox="0 0 {FOOTER_W} {FOOTER_H}">'
+        f'<g transform="translate({_num(origin - mark_left * scale)} 4) scale({_num(scale)})">'
+        f'{symbol_markup("ft", ink)}</g>'
+        f"{prompt_svg}{rest_svg}{licence}</svg>"
     )
 
 

@@ -35,18 +35,18 @@ def _height(svg):
     return float(match.group(1))
 
 
-def test_default_badge_height_is_16():
+def test_default_badge_height_is_20():
     from scripts.layout import load
     from scripts.render_badges import render_badge
 
-    assert load()["badge_h"] == 16
+    assert load()["badge_h"] == 20
     assert load("compact")["badge_h"] == 14
     assert load("tall")["badge_h"] == 20
     live = json.loads(FIXTURE.read_text(encoding="utf-8"))
     badge = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))[0]
     svg = render_badge(badge, live, "night")
-    assert _height(svg) == 16
-    assert "scale(0.009)" in svg
+    assert _height(svg) == 20
+    assert "scale(0.011)" in svg
 
 
 def test_brutalist_cell_frame_tab_and_rule():
@@ -56,6 +56,8 @@ def test_brutalist_cell_frame_tab_and_rule():
     live = json.loads(FIXTURE.read_text(encoding="utf-8"))
     badges = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))
     for badge in badges:
+        if badge.get("style") == "cta":
+            continue
         for theme_name in ("night", "day"):
             theme = tokens.THEMES[theme_name]
             svg = render_badge(badge, live, theme_name)
@@ -71,13 +73,32 @@ def test_brutalist_cell_frame_tab_and_rule():
             assert 'class="rule"' in svg
 
 
+def _view_width(svg):
+    return float(re.search(r'viewBox="0 0 ([0-9.]+) ', svg).group(1))
+
+
+def _frame_width(svg):
+    tag = re.search(r'<rect class="frame"[^>]*>', svg).group(0)
+    return float(re.search(r'(?<![\w-])width="([0-9.]+)"', tag).group(1))
+
+
+def _draw_width(badge, badges):
+    row = [item for item in badges if item["row"] == badge["row"]]
+    gap = 0 if row[-1]["id"] == badge["id"] else 3
+    return badge["w"] - gap
+
+
 def test_stars_badge_is_compact():
     from scripts.render_badges import render_badge
 
     live = json.loads(FIXTURE.read_text(encoding="utf-8"))
-    badge = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))[0]
-    width = float(re.search(r'viewBox="0 0 ([0-9.]+) ', render_badge(badge, live, "night")).group(1))
-    assert width <= 64, width
+    badges = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))
+    badge = badges[0]
+    assert badge["id"] == "stars"
+    assert badge["w"] == 84
+    svg = render_badge(badge, live, "night")
+    assert _view_width(svg) == 84
+    assert _frame_width(svg) == _draw_width(badge, badges) - 1
 
 
 def test_fixture_stars_height_contrast_hosts_and_files(tmp_path):
@@ -109,14 +130,115 @@ def test_fixture_stars_height_contrast_hosts_and_files(tmp_path):
 
 
 def test_link_badges_are_label_plus_arrow():
-    from scripts.render_badges import render_badge
+    from scripts import svgtext
+    from scripts.layout import load
+    from scripts.render_badges import _size, render_badge
 
     live = json.loads(FIXTURE.read_text(encoding="utf-8"))
     badges = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))
     links = [badge for badge in badges if badge["group"] == "link"]
     assert links
+    size = _size(load()["badge_h"])
+    arrow_w = svgtext.text_width("→", "meslo-regular", size, 0)
     for badge in links:
         svg = render_badge(badge, live, "night")
         assert f"<!-- manifest:{badge['label']}=→ -->" in svg
-        width = float(re.search(r'viewBox="0 0 ([0-9.]+) ', svg).group(1))
-        assert width <= 7 + len(badge["label"]) * 5.5 + 4 + 1 + 4 + 5.5 + 4 + 0.5, (badge["id"], width)
+        assert _view_width(svg) == badge["w"]
+        draw = _draw_width(badge, badges)
+        xs = [float(item) for item in re.findall(r"translate\(([0-9.]+) ", svg)]
+        assert xs
+        assert max(xs) == round(draw - 6 - arrow_w, 2)
+
+
+SLOT_W = {
+    1: (("stars", 84), ("followers", 108), ("release", 232), ("phd", 130), ("research", 292)),
+    2: (
+        ("homepage", 103),
+        ("scholar", 96),
+        ("orcid", 83),
+        ("linkedin", 103),
+        ("pypi", 76),
+        ("researchgate", 129),
+        ("mail", 76),
+        ("coffee", 180),
+    ),
+}
+
+
+def test_rows_sum_to_article_width():
+    badges = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))
+    by_id = {badge["id"]: badge for badge in badges}
+    assert len(by_id) == len(badges)
+    for row, slots in SLOT_W.items():
+        assert [badge["id"] for badge in badges if badge["row"] == row] == [slot[0] for slot in slots]
+        assert sum(slot[1] for slot in slots) == 846
+        for badge_id, width in slots:
+            assert by_id[badge_id]["w"] == width
+            assert by_id[badge_id]["row"] == row
+
+
+def test_row_last_cell_is_flush():
+    from scripts.render_badges import render_badge
+
+    live = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    badges = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))
+    by_id = {badge["id"]: badge for badge in badges}
+    stars = render_badge(by_id["stars"], live, "night")
+    assert _view_width(stars) == 84
+    assert _frame_width(stars) == 84 - 3 - 1
+    research = render_badge(by_id["research"], live, "night")
+    assert _view_width(research) == 292
+    assert _frame_width(research) == 292 - 1
+    coffee = render_badge(by_id["coffee"], live, "day")
+    assert _view_width(coffee) == 180
+    ground = re.search(r'class="value"[^>]*width="([0-9.]+)"', coffee)
+    assert ground and float(ground.group(1)) == 180
+
+
+def test_long_value_truncates_inside_slot():
+    from scripts import svgtext
+    from scripts.layout import load
+    from scripts.render_badges import _size, render_badge
+
+    live = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    live["release"] = "R" * 40
+    badges = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))
+    badge = next(item for item in badges if item["id"] == "release")
+    svg = render_badge(badge, live, "night")
+    shown = re.search(r"<!-- manifest:release=(.*?) -->", svg).group(1)
+    assert shown.endswith("...")
+    assert shown != live["release"]
+    assert live["release"] not in svg
+    size = _size(load()["badge_h"])
+    draw = _draw_width(badge, badges)
+    assert svgtext.text_width(live["release"], "meslo-regular", size, 0) > draw
+    xs = [float(item) for item in re.findall(r"translate\(([0-9.]+) ", svg)]
+    right = max(xs) + svgtext.text_width(".", "meslo-regular", size, 0)
+    assert right <= draw + 0.05
+
+
+def test_coffee_cell_is_filled_and_contrasty():
+    import sys
+
+    sys.path.insert(0, str(ROOT / "tests"))
+    from scripts import tokens
+    from scripts.render_badges import render_badge
+    from test_contrast import contrast
+
+    live = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    badges = json.loads((ROOT / "data" / "badges.json").read_text(encoding="utf-8"))
+    coffee = next(item for item in badges if item["id"] == "coffee")
+    assert coffee["label"] == "buy me a coffee"
+    assert coffee["style"] == "cta"
+    for theme_name in ("night", "day"):
+        theme = tokens.THEMES[theme_name]
+        svg = render_badge(coffee, live, theme_name)
+        assert f'fill="{theme["warn"]}"' in svg
+        assert theme["inverse_ink"] in svg
+        assert 'class="tab"' not in svg
+        assert 'class="rule"' not in svg
+        assert 'class="frame"' not in svg
+        assert "<text" not in svg.lower()
+        assert "gradient" not in svg.lower() and "filter=" not in svg.lower()
+        assert contrast(theme["inverse_ink"], theme["warn"]) >= 4.5
+        assert svg.lower().count("<rect") >= 4

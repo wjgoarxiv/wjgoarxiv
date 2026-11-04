@@ -195,7 +195,8 @@ def _assert_reel_window(svg):
     from scripts.motion import reel_pitch
 
     assert "reel-d" not in svg
-    assert "translateY" not in svg
+    without_wave = re.sub(r"@keyframes wave \{.*?\n\}\s*", "", svg, flags=re.S)
+    assert "translateY" not in without_wave
     parts = svg.split('<g class="odo" ')[1:]
     assert parts
     for part in parts:

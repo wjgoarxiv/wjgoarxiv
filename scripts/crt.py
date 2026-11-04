@@ -218,29 +218,31 @@ class Chrome:
     def bloom(self, markup):
         return markup
 
-    def screen(self, box_w, box_h, scan=False):
-        parts = [f'<rect width="{box_w}" height="{box_h}" fill="{self.BG}"/>']
+    def screen(self, box_w, box_h, scan=False, origin=0):
+        x_attr = f' x="{origin}"' if origin else ""
+        parts = [f'<rect{x_attr} width="{box_w}" height="{box_h}" fill="{self.BG}"/>']
         if scan:
-            parts.append(f'<rect width="{box_w}" height="{box_h}" fill="url(#scan)"/>')
+            parts.append(f'<rect{x_attr} width="{box_w}" height="{box_h}" fill="url(#scan)"/>')
         parts.append(
-            f'<rect x="0.5" y="0.5" width="{box_w - 1}" height="{box_h - 1}" fill="none" '
+            f'<rect x="{origin + 0.5}" y="0.5" width="{box_w - 1}" height="{box_h - 1}" fill="none" '
             f'stroke="{self.border}" stroke-width="1"/>'
         )
         return "".join(parts)
 
-    def plot_grid(self, box_w, box_h, top=32):
+    def plot_grid(self, box_w, box_h, top=32, origin=0):
         minor = self.t["grid"]
         major = self.t["grid_major"]
         bits = []
-        x = 32
-        while x < box_w:
-            color = major if x % 160 == 0 else minor
+        x = origin + 32
+        right = origin + box_w
+        while x < right:
+            color = major if (x - origin) % 160 == 0 else minor
             bits.append(f'<line x1="{x}" y1="{top}" x2="{x}" y2="{box_h}" stroke="{color}" stroke-width="1"/>')
             x += 32
         y = top
         while y < box_h:
             color = major if (y - top) % 160 == 0 else minor
-            bits.append(f'<line x1="0" y1="{y}" x2="{box_w}" y2="{y}" stroke="{color}" stroke-width="1"/>')
+            bits.append(f'<line x1="{origin}" y1="{y}" x2="{right}" y2="{y}" stroke="{color}" stroke-width="1"/>')
             y += 32
         return "".join(bits)
 

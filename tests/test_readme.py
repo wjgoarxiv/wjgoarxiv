@@ -2,9 +2,13 @@
 
 import json
 import re
+import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 README = ROOT / "README.md"
 DOIS = (
     "10.1016/j.cej.2021.134098",
@@ -111,6 +115,119 @@ def test_folds_badges_contrib_and_orphans():
         if rel.startswith("assets/atlas/") or rel.startswith("assets/brand/") or "lockup-" in rel:
             continue
         assert rel in referenced, rel
+
+
+def test_badges_have_no_whitespace_gap():
+    text = README.read_text(encoding="utf-8")
+    paragraph = next(
+        block
+        for block in re.findall(r"<p\b[^>]*>.*?</p>", text, re.DOTALL)
+        if "stars-night.svg" in block and "coffee-night.svg" in block
+    )
+    assert "<br>" in paragraph
+    assert re.search(r"</a>\s+<a", paragraph) is None
+    row1, row2 = paragraph.split("<br>", 1)
+    order = ("stars", "followers", "release", "phd", "research")
+    positions = [row1.index(f"assets/badges/{badge_id}-night.svg") for badge_id in order]
+    assert positions == sorted(positions)
+    assert "homepage-night.svg" not in row1
+    assert "coffee-night.svg" in row2
+
+
+def test_panes_have_no_whitespace_gap():
+    text = README.read_text(encoding="utf-8")
+    paragraph = next(
+        block
+        for block in re.findall(r"<p\b[^>]*>.*?</p>", text, re.DOTALL)
+        if "lab-night.svg" in block and "workshop-night.svg" in block
+    )
+    anchors = re.findall(r"<a\b.*?</a>", paragraph, re.DOTALL)
+    assert len(anchors) == 2
+    between = paragraph.split(anchors[0], 1)[1].split(anchors[1], 1)[0]
+    assert between == ""
+    assert 'width="50%"' in anchors[0]
+    assert 'width="50%"' in anchors[1]
+    assert 'width="49%"' not in paragraph
+
+
+CARD_ROWS = {
+    "/projects/litfamily · 7": [
+        [("litfamily", 100.0)],
+        [("litgravity", 33.33), ("litclaude", 33.33), ("litcodex", 33.33)],
+        [("litopencode", 33.33), ("lithermes", 33.33), ("litgrok", 33.33)],
+    ],
+    "/projects/science-mcp · 4": [
+        [("ovito-mcp", 50.0), ("pymol-mcp", 50.0)],
+        [("multiflash-assistant", 50.0), ("hysys-companion-releases", 50.0)],
+    ],
+    "/projects/env · 5": [
+        [("pretty-terminal", 33.33), ("my-tmux-settings", 33.33), ("my-nvim-settings", 33.33)],
+        [("proxlsx-skill", 50.0), ("publisher-docx-skill", 50.0)],
+    ],
+}
+
+
+def _card_rows(fold):
+    rows = []
+    for paragraph in re.findall(r"<p\b[^>]*>.*?</p>", fold, re.DOTALL):
+        if "assets/cards/" not in paragraph:
+            continue
+        assert re.search(r"</a>\s+<a", paragraph) is None
+        row = []
+        for anchor in re.findall(r"<a\b.*?</a>", paragraph, re.DOTALL):
+            name = re.search(r"assets/cards/([a-z0-9-]+)-night\.svg", anchor).group(1)
+            width = float(re.search(r'width="([0-9.]+)%"', anchor).group(1))
+            row.append((name, width))
+        rows.append(row)
+    return rows
+
+
+def test_card_rows_have_no_orphans():
+    text = README.read_text(encoding="utf-8")
+    folds = re.findall(r"<details>(.*?)</details>", text, re.DOTALL)
+    seen = {}
+    for fold in folds:
+        summary = re.search(r"<summary><samp>([^<]+)</samp></summary>", fold)
+        assert summary
+        if "assets/cards/" not in fold:
+            continue
+        label = summary.group(1)
+        rows = _card_rows(fold)
+        for row in rows:
+            total = sum(width for _name, width in row)
+            assert 99.9 <= total <= 100.1, (label, row, total)
+        seen[label] = [[name for name, _width in row] for row in rows]
+        expect = [[name for name, _width in row] for row in CARD_ROWS[label]]
+        assert seen[label] == expect
+        for got, want in zip(rows, CARD_ROWS[label]):
+            assert [width for _name, width in got] == [width for _name, width in want]
+    assert set(seen) == set(CARD_ROWS)
+
+
+def test_card_group_without_row_spec_raises():
+    from scripts.render_cards import card_slots
+
+    with pytest.raises(ValueError):
+        card_slots([{"group": "other", "name": "x"}])
+
+
+def test_licence_in_footer():
+    text = README.read_text(encoding="utf-8")
+    assert "<p>Outlined glyphs" not in text
+    anchor = re.search(
+        r'<a href="LICENSES/">\s*<picture>.*?footer-night\.svg.*?</picture>\s*</a>',
+        text,
+        re.DOTALL,
+    )
+    assert anchor
+    assert 'width="100%"' in anchor.group(0)
+    atlas = json.loads((ROOT / "assets" / "atlas" / "glyphs.json").read_text(encoding="utf-8"))
+    capital_o = atlas["faces"]["meslo-regular"]["glyphs"]["O"]["d"]
+    for theme in ("night", "day"):
+        svg = (ROOT / "assets" / f"footer-{theme}.svg").read_text(encoding="utf-8")
+        assert "<text" not in svg.lower()
+        assert 'width="560"' in svg and 'height="52"' in svg
+        assert capital_o in svg
 
 
 def test_shields_in_a_copy_fails(tmp_path):

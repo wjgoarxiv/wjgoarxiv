@@ -43,6 +43,8 @@ MOTION = {
     "wordmark_delay_s": 0.72,
     "boot_delay_s": 1.04,
     "status_delay_s": 1.60,
+    "wave_s": 10,
+    "wave_step_s": 0.035,
 }
 
 FACE = "meslo-regular"
@@ -292,26 +294,37 @@ def workshop_style():
 </style>"""
 
 
+def _wave_amps():
+    return ".a0{--a:-18px}.a1{--a:-16px}.a2{--a:-14px}.a3{--a:-12px}"
+
+
+def _wave_delays(cols, rows):
+    step = MOTION["wave_step_s"]
+    span = max(cols - 1, 0) + max(rows - 1, 0)
+    delays = []
+    for distance in range(span + 1):
+        delay = round(distance * step, 2)
+        delays.append(f".d{distance}{{animation-delay:calc(2.4s + {delay}s)}}")
+    return "".join(delays)
+
+
 def contrib_style(size, cols=53, rows=7):
     ease = EASE
     return f"""<style>
 {reel_css(size)}
 {voxel_delay_css(cols, rows)}
+{_wave_amps()}
 .voxel {{ transform: none; }}
 .floor {{ opacity: 1; }}
-.beam {{ opacity: 0; }}
 @media (prefers-reduced-motion: no-preference) {{
   .floor {{ animation: floor-in {MOTION['floor_ms']}ms {ease['out_quint']} both; }}
   .voxel {{
     animation: voxel-drop 360ms {ease['out_quint']} both;
     animation-delay: calc(var(--c, 0s) + var(--r, 0s) + var(--s, 0s));
   }}
-  .peak {{
-    animation: voxel-drop 360ms {ease['out_quint']} both, voxel-bob 9s {ease['in_out']} infinite;
-    animation-delay: calc(var(--c, 0s) + var(--r, 0s) + var(--s, 0s)), calc(var(--c, 0s) + var(--r, 0s) + var(--s, 0s) + 1.2s);
-  }}
-  .beam {{ animation: beam 9s {ease['in_out']} infinite; }}
+  .w {{ animation: wave {MOTION['wave_s']}s {ease['out_quint']} infinite; }}
 }}
+{_wave_delays(cols, rows)}
 @keyframes floor-in {{
   from {{ opacity: 0; clip-path: polygon(0 0, 0 0, 0 0, 0 0); }}
   to {{ opacity: 1; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }}
@@ -320,21 +333,16 @@ def contrib_style(size, cols=53, rows=7):
   from {{ transform: translate(0, -24px); }}
   to {{ transform: none; }}
 }}
-@keyframes voxel-bob {{
-  0%, 74%, 100% {{ transform: translate(0, 0); }}
-  86% {{ transform: translate(0, -2px); }}
-}}
-@keyframes beam {{
-  0% {{ transform: translateX(-48px); opacity: 0; }}
-  16% {{ opacity: 0.14; }}
-  70% {{ opacity: 0.14; }}
-  86%, 100% {{ transform: translateX(1160px); opacity: 0; }}
+@keyframes wave {{
+  0% {{ transform: none; }}
+  3% {{ transform: translateY(var(--a)); }}
+  10%, 100% {{ transform: none; }}
 }}
 @media (prefers-reduced-motion: reduce) {{
-  .voxel, .peak, .floor, .beam, .odo-reel {{ animation: none !important; }}
-  .voxel, .peak {{ transform: none !important; }}
+  .voxel, .floor, .odo-reel {{ animation: none !important; }}
+  .voxel {{ transform: none !important; }}
   .floor {{ opacity: 1 !important; }}
-  .beam {{ opacity: 0 !important; }}
+  .w {{ animation: none !important; transform: none !important; }}
 }}
 </style>"""
 

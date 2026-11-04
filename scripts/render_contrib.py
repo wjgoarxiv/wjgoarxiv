@@ -59,6 +59,28 @@ def _streak(weeks):
     return best
 
 
+def _wave_tier(distance):
+    if distance <= 10:
+        return 0
+    if distance <= 25:
+        return 1
+    if distance <= 40:
+        return 2
+    return 3
+
+
+def _peak(weeks, dates):
+    best = None
+    for col, week in enumerate(weeks):
+        for row, count in enumerate(week):
+            if count <= 0:
+                continue
+            cell = (count, dates[col][row], col, row)
+            if best is None or cell > best:
+                best = cell
+    return best
+
+
 def _poly(points):
     head = f"M{points[0][0]:.1f} {points[0][1]:.1f}"
     return head + "".join(f"L{x:.1f} {y:.1f}" for x, y in points[1:]) + "Z"
@@ -107,15 +129,11 @@ def render_svg(model, theme="night", preset=None):
     week_pitch = 21.0
     box_w = 12.0
     day_dx, day_dy = 7.0, -11.0
-    column_unit = 85.0 / 4
+    column_unit = 30.0
     depth = (7.5, -9.0)
     grid_w = (max(cols - 1, 0) * week_pitch) + (max(rows - 1, 0) * day_dx) + box_w
     origin_x = (width - grid_w) / 2 + box_w / 2
-    floor_span = (max(rows - 1, 0) * abs(day_dy)) + (4 * column_unit)
-    top_chrome = 56
-    bottom_pad = 20
-    slack = max(0.0, (height - bottom_pad - top_chrome) - floor_span)
-    baseline = top_chrome + slack / 2 + floor_span
+    baseline = height - 24
 
     def point(col, row):
         return origin_x + col * week_pitch + row * day_dx, baseline + row * day_dy
@@ -179,6 +197,8 @@ def render_svg(model, theme="night", preset=None):
     symbols.append("</defs>")
     weeks_markup = ['<g class="lattice-still">']
     meta = []
+    col0 = cols - 1
+    row0 = rows - 1
     for col, week in enumerate(weeks):
         for row in range(rows - 1, -1, -1):
             count = week[row]
@@ -191,22 +211,21 @@ def render_svg(model, theme="night", preset=None):
             for index in range(level):
                 floor_y = py - index * cube_h
                 classes = f"voxel c{col} r{row} s{index}"
-                if level == 4 and index == level - 1:
-                    classes += " peak"
                 cubes.append(
                     f'<use href="#v{level}" x="{px + min_x:.1f}" y="{floor_y + min_y:.1f}" '
                     f'width="{symbol_w:.1f}" height="{symbol_h:.1f}" class="{classes}"/>'
                 )
+            distance = abs(col - col0) + abs(row - row0)
             meta.append(f'<g class="column" data-count="{count}" data-h="{rise:.1f}" data-col="{col}" data-row="{row}"></g>')
-            weeks_markup.append("".join(cubes))
+            weeks_markup.append(f'<g class="w d{distance} a{_wave_tier(distance)}">{"".join(cubes)}</g>')
     weeks_markup.append("</g>")
     title = "~/CONTRIB"
     readout_size = 13
     total_value = total
     streak_value = _streak(weeks)
     legend = ['<g class="legend">']
-    legend.append(crt.text("less", "meslo-regular", 11, 18, 46, p.TEXT))
-    cursor = 18 + crt.width("less", "meslo-regular", 11) + 8
+    legend.append(crt.text("less", "meslo-regular", 11, layout.INSET, 46, p.TEXT))
+    cursor = layout.INSET + crt.width("less", "meslo-regular", 11) + 8
     for level in range(5):
         legend.append(
             f'<rect x="{cursor:.1f}" y="36" width="9" height="9" fill="{ramp[level][0]}" stroke="{ramp[level][3]}" stroke-width="0.6"/>'
@@ -228,6 +247,8 @@ def render_svg(model, theme="night", preset=None):
     total_label = "TOTAL "
     streak_label = "STREAK "
     suffix = " d"
+    ink = p.t["inverse_ink"]
+    gap = crt.width("   ", "meslo-regular", readout_size)
     total_w = crt.width(total_label, "meslo-regular", readout_size) + motion.reel_width(total_value, readout_size)
     streak_w = (
         crt.width(streak_label, "meslo-regular", readout_size)
@@ -235,22 +256,35 @@ def render_svg(model, theme="night", preset=None):
         + crt.width(suffix, "meslo-regular", readout_size)
     )
     total_x = width - 18 - total_w
-    streak_x = width - 18 - streak_w
+    streak_x = total_x - gap - streak_w
     total_clips, total_body, _total_used = motion.odometer(
         total_value,
         total_x + crt.width(total_label, "meslo-regular", readout_size),
         19,
         readout_size,
         "total",
-        p.t["inverse_ink"],
+        ink,
     )
     streak_digits_x = streak_x + crt.width(streak_label, "meslo-regular", readout_size)
     streak_clips, streak_body, streak_used = motion.odometer(
-        streak_value, streak_digits_x, 42, readout_size, "streak", p.TEXT
+        streak_value, streak_digits_x, 19, readout_size, "streak", ink
     )
-    beam = (
-        f'<rect class="beam" x="0" y="58" width="28" height="{height - 78}" fill="{p.LAB}" opacity="0"/>'
-    )
+    callout = ""
+    peak = _peak(weeks, dates)
+    if peak:
+        count, stamp, col, row = peak
+        px, py = point(col, row)
+        label = f"PEAK {count} · {stamp}"
+        text_x = px - crt.width(label, "meslo-regular", 11) if px > width * 0.6 else px
+        top = py - levels[col][row] * column_unit + depth[1]
+        leader = (
+            f'<rect class="leader" x="{px - 0.5:.1f}" y="62" width="1" '
+            f'height="{top - 62:.1f}" fill="{p.TEXT}"/>'
+        )
+        callout = (
+            f'<g class="callout" data-count="{count}" data-date="{stamp}">'
+            f"{leader}{crt.text(label, 'meslo-regular', 11, text_x, 58, p.TEXT)}</g>"
+        )
     parts = [
         crt.svg_open(width, height),
         motion.contrib_style(readout_size, cols, rows),
@@ -261,18 +295,18 @@ def render_svg(model, theme="night", preset=None):
         p.plot_grid(width, height, 28),
         f'<g class="readout" fill="{p.TEXT}">',
         f'<rect x="0" y="0" width="{width}" height="28" fill="{p.t["inverse_bg"]}"/>',
-        crt.text(title, "meslo-regular", 14, 12, 19, p.t["inverse_ink"]),
-        crt.text(total_label, "meslo-regular", readout_size, total_x, 19, p.t["inverse_ink"]),
-        total_body,
-        crt.text(streak_label, "meslo-regular", readout_size, streak_x, 42, p.TEXT),
+        crt.text(title, "meslo-regular", 14, layout.INSET, 19, ink),
+        crt.text(streak_label, "meslo-regular", readout_size, streak_x, 19, ink),
         streak_body,
-        crt.text(suffix, "meslo-regular", readout_size, streak_digits_x + streak_used, 42, p.TEXT),
+        crt.text(suffix, "meslo-regular", readout_size, streak_digits_x + streak_used, 19, ink),
+        crt.text(total_label, "meslo-regular", readout_size, total_x, 19, ink),
+        total_body,
         "</g>",
         "".join(legend),
         floor,
         node_markup,
         "".join(weeks_markup),
-        beam,
+        callout,
         "".join(months),
         "".join(meta),
         "</svg>",

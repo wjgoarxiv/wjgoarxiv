@@ -19,17 +19,29 @@ def _box(preset):
     return PANE_W, layout.load(preset)["pane_h"]
 
 
-def _chrome(p, accent, title, cell, box_w, box_h, style):
+def _num(value):
+    number = float(value)
+    if number.is_integer():
+        return str(int(number))
+    return f"{number:.1f}"
+
+
+def _pane_frame(col, box_w):
+    return layout.frame_x(col, 2, box_w)
+
+
+def _chrome(p, accent, title, cell, box_w, box_h, style, x0, x1):
     bar = 28
+    frame_w = x1 - x0
     return "".join(
         (
             crt.svg_open(box_w, box_h),
             style,
             p.DEFS,
-            p.screen(box_w, box_h),
-            p.plot_grid(box_w, box_h, bar),
-            f'<rect x="0" y="0" width="{box_w}" height="{bar}" fill="{p.t["inverse_bg"]}"/>',
-            crt.text(f"~/{title}", "meslo-regular", 14, 12, 19, p.t["inverse_ink"]),
+            p.screen(frame_w, box_h, origin=x0),
+            p.plot_grid(frame_w, box_h, bar, origin=x0),
+            f'<rect x="{_num(x0)}" y="0" width="{_num(frame_w)}" height="{bar}" fill="{p.t["inverse_bg"]}"/>',
+            crt.text(f"~/{title}", "meslo-regular", 14, x0 + layout.INSET, 19, p.t["inverse_ink"]),
         )
     )
 
@@ -48,7 +60,7 @@ def _fit(text, face, size, max_width):
     return (stem + "...") if stem else "..."
 
 
-def _lab_regions(box_w, box_h):
+def _lab_regions(x0, x1, box_h):
     footer_y = box_h - 16
     rule_y = footer_y - 16
     paper_ys = (rule_y - 26, rule_y - 10)
@@ -57,7 +69,7 @@ def _lab_regions(box_w, box_h):
     cage_bottom = min(cage_top + cage_h, paper_ys[0] - 38)
     if cage_bottom - cage_top < box_h * 0.55:
         cage_bottom = cage_top + box_h * 0.55
-    split = box_w * 0.50
+    split = x0 + (x1 - x0) * 0.50
     tag_ys = tuple(96 + index * 18 for index in range(5))
     return footer_y, rule_y, paper_ys, tag_ys, cage_top, cage_bottom, split
 
@@ -99,11 +111,15 @@ def render_lab(theme="night", preset=None):
     glyphs = Glyphs()
     papers = json.loads((ROOT / "data" / "papers.json").read_text(encoding="utf-8"))
     newest = newest_papers(papers, 2)
-    footer_y, rule_y, paper_ys, tag_ys, cage_top, cage_bottom, split = _lab_regions(box_w, box_h)
+    x0, x1 = _pane_frame(0, box_w)
+    text_x = x0 + layout.INSET
+    text_r = x1 - layout.INSET
+    footer_y, rule_y, paper_ys, tag_ys, cage_top, cage_bottom, split = _lab_regions(x0, x1, box_h)
     y0 = cage_top + 2
     y1 = cage_bottom - 2
-    x_room = box_w - 16 - (split + 8)
-    cx = split + 8 + x_room / 2
+    cage_gap = 8
+    x_room = text_r - (split + cage_gap)
+    cx = split + cage_gap + x_room / 2
     cy = (y0 + y1) / 2
     scale = cage.fit_scale(y0, y1, x_room)
     rows = (
@@ -113,21 +129,21 @@ def render_lab(theme="night", preset=None):
         "MD & clathrate cage analysis",
         "process sim · HYSYS / Multiflash",
     )
-    parts = [_chrome(p, p.LAB, "LAB", 4, box_w, box_h, motion.lab_style())]
+    parts = [_chrome(p, p.LAB, "LAB", 4, box_w, box_h, motion.lab_style(), x0, x1)]
     parts.append(cage.sprite(cx, cy, scale, p.LAB))
     parts.append(
         f'<g class="lab-in" style="--d:0.46s">{_notation(glyphs, cx, cage_bottom + 18, p.DIM)}</g>'
     )
-    tag_width = split - 28
+    tag_width = split - cage_gap - text_x
     step = motion.MOTION["stagger_ms"] / 1000
     for index, (text, y) in enumerate(zip(rows, tag_ys)):
         wait = motion.delay_s(index, 0.52, step)
         parts.append(
             f'<g class="lab-in" style="--d:{wait:.2f}s">'
-            + glyphs.text(_fit(text, "meslo-regular", 12, tag_width), "meslo-regular", 12, 16, y, p.TEXT)
+            + glyphs.text(_fit(text, "meslo-regular", 12, tag_width), "meslo-regular", 12, text_x, y, p.TEXT)
             + "</g>"
         )
-    max_line = box_w - 32
+    max_line = text_r - text_x
     for index, (paper, y) in enumerate(zip(newest, paper_ys)):
         line = _fit(
             f"{paper['year']} · {paper['full_venue']} · {paper['title']}",
@@ -138,18 +154,20 @@ def render_lab(theme="night", preset=None):
         wait = motion.delay_s(index, 0.84, step)
         parts.append(
             f'<g class="lab-in" style="--d:{wait:.2f}s">'
-            + glyphs.text(line, "meslo-regular", 13, 16, y, p.LAB)
+            + glyphs.text(line, "meslo-regular", 13, text_x, y, p.LAB)
             + "</g>"
         )
-    parts.append(f'<line x1="14" y1="{rule_y}" x2="{box_w - 14}" y2="{rule_y}" stroke="{p.GRID}" stroke-width="1"/>')
+    parts.append(
+        f'<line x1="{_num(text_x)}" y1="{rule_y}" x2="{_num(text_r)}" y2="{rule_y}" stroke="{p.GRID}" stroke-width="1"/>'
+    )
     latin = "Ph.D. UNIST 2023 · "
-    parts.append(glyphs.text(latin, "meslo-regular", 13, 16, footer_y, p.DIM))
+    parts.append(glyphs.text(latin, "meslo-regular", 13, text_x, footer_y, p.DIM))
     parts.append(
         glyphs.text(
             "가스 하이드레이트",
             "pretendard-regular",
             13,
-            16 + crt.width(latin, "meslo-regular", 13),
+            text_x + crt.width(latin, "meslo-regular", 13),
             footer_y,
             p.DIM,
         )
@@ -197,9 +215,12 @@ def render_workshop(theme="night", preset=None):
     room = rule_y - 10 - top
     lead = room / max(left_slots, right_slots)
     size = 15 if lead >= 17 else 14
-    parts = [_chrome(p, p.WORK, "WORKSHOP", 3, box_w, box_h, motion.workshop_style())]
-    left = 16
-    mid = box_w * 0.38
+    x0, x1 = _pane_frame(1, box_w)
+    text_x = x0 + layout.INSET
+    text_r = x1 - layout.INSET
+    parts = [_chrome(p, p.WORK, "WORKSHOP", 3, box_w, box_h, motion.workshop_style(), x0, x1)]
+    left = text_x
+    mid = x0 + (x1 - x0) * 0.38
     right_x = mid + 16
     rows = []
     y_left = top + lead
@@ -214,14 +235,16 @@ def render_workshop(theme="night", preset=None):
         rows.append((y_right, right_x, glyphs.text(key, "meslo-bold", size, right_x, y_right, accent)))
         y_right += lead
         for project in grouped_rows:
-            rows.append(_workshop_row(glyphs, p, project, accent, right_x, box_w - 16, y_right, size))
+            rows.append(_workshop_row(glyphs, p, project, accent, right_x, text_r, y_right, size))
             y_right += lead
     step = 0.08
     for index, (_y, _x, body) in enumerate(sorted(rows, key=lambda item: (item[0], item[1]))):
         wait = motion.delay_s(index, 0.08, step)
         parts.append(f'<g class="row" style="--d:{wait:.3f}s">{body}</g>')
-    parts.append(f'<line x1="14" y1="{rule_y}" x2="{box_w - 14}" y2="{rule_y}" stroke="{p.GRID}" stroke-width="1"/>')
-    parts.append(glyphs.text("LINK ● AGENTS    QUEUE 0", "meslo-regular", 13, 16, footer_y, p.DIM))
+    parts.append(
+        f'<line x1="{_num(text_x)}" y1="{rule_y}" x2="{_num(text_r)}" y2="{rule_y}" stroke="{p.GRID}" stroke-width="1"/>'
+    )
+    parts.append(glyphs.text("LINK ● AGENTS    QUEUE 0", "meslo-regular", 13, text_x, footer_y, p.DIM))
     names = "|".join(project["name"] for project in projects)
     parts.append(f"<defs>{glyphs.defs()}</defs>")
     parts.append(f"<!-- data-names:{names} -->")

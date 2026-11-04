@@ -14,6 +14,22 @@ ROOT = Path(__file__).resolve().parents[1]
 CARD_W, CARD_H = 400, 190
 BAR_W, BAR_H = 1200, 56
 PAPER_W, PAPER_H = 1200, 118
+SPAN_WIDTH = {1: 1200, 2: 600, 3: 400}
+ROW_SPEC = {
+    "litfamily": (
+        ("litfamily",),
+        ("litgravity", "litclaude", "litcodex"),
+        ("litopencode", "lithermes", "litgrok"),
+    ),
+    "science/mcp": (
+        ("ovito-mcp", "pymol-mcp"),
+        ("multiflash-assistant", "hysys-companion-releases"),
+    ),
+    "env": (
+        ("pretty-terminal", "my-tmux-settings", "my-nvim-settings"),
+        ("proxlsx-skill", "publisher-docx-skill"),
+    ),
+}
 
 
 class Glyphs:
@@ -76,26 +92,53 @@ def _accent(p, group):
     return {"litfamily": p.WORK, "science/mcp": p.LAB, "env": p.ENV}[group]
 
 
-def _card(project, glyphs, p):
+def card_slots(projects):
+    """Column and span for each project. A group with no row spec raises."""
+    grouped = {}
+    for project in projects:
+        grouped.setdefault(project["group"], []).append(project["name"])
+    slots = {}
+    for group, names in grouped.items():
+        rows = ROW_SPEC.get(group)
+        if rows is None:
+            raise ValueError(f"no row spec for {group}")
+        expected = [name for row in rows for name in row]
+        if names != expected:
+            raise ValueError(f"row spec does not match {group} order")
+        for row in rows:
+            cols = len(row)
+            if cols not in SPAN_WIDTH:
+                raise ValueError(f"unsupported span {cols}")
+            for col, name in enumerate(row):
+                slots[name] = (col, cols)
+    return slots
+
+
+def _card(project, glyphs, p, col, cols):
     accent = _accent(p, project["group"])
+    width = SPAN_WIDTH[cols]
+    x0, x1 = layout.frame_x(col, cols, width)
+    frame_w = x1 - x0
+    text_x = x0 + layout.INSET
     size = 20
-    lines = wrap(project["description"], "meslo-regular", size, 360, 3)
+    lines = wrap(project["description"], "meslo-regular", size, x1 - layout.INSET - text_x, 3)
+    status_x = x1 - (CARD_W - 250)
     body = [
-        p.screen(CARD_W, CARD_H),
-        crt.ticks(CARD_W, CARD_H, accent),
-        f'<rect x="16" y="12" width="10" height="10" fill="{accent}"/>',
-        glyphs.text(project["name"], "meslo-bold", size, 32, 22, accent),
-        f'<line x1="14" y1="34" x2="{CARD_W - 14}" y2="34" stroke="{p.GRID}" stroke-width="1"/>',
-        glyphs.text("AUTHOR", "meslo-regular", size, 16, 60, p.TEXT),
-        glyphs.text(project["status"], "meslo-regular", size, 250, 60, accent),
+        p.screen(frame_w, CARD_H, origin=x0),
+        f'<g transform="translate({x0} 0)">{crt.ticks(frame_w, CARD_H, accent)}</g>',
+        f'<rect x="{text_x}" y="12" width="10" height="10" fill="{accent}"/>',
+        glyphs.text(project["name"], "meslo-bold", size, text_x + 12, 22, accent),
+        f'<line x1="{x0 + 14}" y1="34" x2="{x1 - 14}" y2="34" stroke="{p.GRID}" stroke-width="1"/>',
+        glyphs.text("AUTHOR", "meslo-regular", size, text_x, 60, p.TEXT),
+        glyphs.text(project["status"], "meslo-regular", size, status_x, 60, accent),
     ]
     y = 92
     for line in lines:
-        body.append(glyphs.text(line, "meslo-regular", size, 16, y, p.TEXT))
+        body.append(glyphs.text(line, "meslo-regular", size, text_x, y, p.TEXT))
         y += 26
     return "".join(
         [
-            crt.svg_open(CARD_W, CARD_H),
+            crt.svg_open(width, CARD_H),
             "<defs>",
             p.DEFS.replace("<defs>", "").replace("</defs>", ""),
             glyphs.defs(),
@@ -107,21 +150,29 @@ def _card(project, glyphs, p):
 
 
 def _paper(paper, glyphs, p, paper_w=PAPER_W, paper_h=PAPER_H):
-    title = wrap(paper["title"], "meslo-regular", 20, paper_w - 60, 2)
+    left = layout.INSET
+    title = wrap(paper["title"], "meslo-regular", 20, paper_w - 2 * layout.INSET, 2)
     body = [
         p.screen(paper_w, paper_h),
         crt.ticks(paper_w, paper_h, p.LAB),
-        glyphs.text(f"ARCHIVE  {paper['year']}", "meslo-bold", 18, 18, 28, p.LAB),
+        glyphs.text(f"ARCHIVE  {paper['year']}", "meslo-bold", 18, left, 28, p.LAB),
         glyphs.text(paper["short_venue"], "meslo-regular", 16, 280, 28, p.LAB),
-        glyphs.text(paper["doi"], "meslo-regular", 14, 18, 104, p.DIM),
+        glyphs.text(paper["doi"], "meslo-regular", 14, left, 104, p.DIM),
     ]
     marker = "→ DOI"
     body.append(
-        glyphs.text(marker, "meslo-regular", 16, paper_w - 18 - glyphs.width(marker, "meslo-regular", 16), 104, p.DIM)
+        glyphs.text(
+            marker,
+            "meslo-regular",
+            16,
+            paper_w - layout.INSET - glyphs.width(marker, "meslo-regular", 16),
+            104,
+            p.DIM,
+        )
     )
     y = 58
     for line in title:
-        body.append(glyphs.text(line, "meslo-regular", 20, 18, y, p.TEXT))
+        body.append(glyphs.text(line, "meslo-regular", 20, left, y, p.TEXT))
         y += 24
     return "".join(
         [
@@ -153,13 +204,15 @@ def render_all(theme="night", preset=None):
     p = crt.Chrome(theme)
     projects = json.loads((ROOT / "data" / "projects.json").read_text(encoding="utf-8"))
     papers = json.loads((ROOT / "data" / "papers.json").read_text(encoding="utf-8"))
+    slots = card_slots(projects)
     cards = ROOT / "assets" / "cards"
     strips = ROOT / "assets" / "papers"
     cards.mkdir(parents=True, exist_ok=True)
     strips.mkdir(parents=True, exist_ok=True)
     for project in projects:
+        col, cols = slots[project["name"]]
         dest = cards / f"{project['name']}.svg"
-        tokens.themed_path(dest, theme).write_text(_card(project, Glyphs(), p), encoding="utf-8")
+        tokens.themed_path(dest, theme).write_text(_card(project, Glyphs(), p, col, cols), encoding="utf-8")
         tokens.retire_unthemed(dest)
     for paper in papers:
         dest = strips / f"{paper['year']}-{paper['slug']}.svg"

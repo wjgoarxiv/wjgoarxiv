@@ -4,90 +4,117 @@
     "label": "stars",
     "live_key": "stars",
     "url": "https://github.com/wjgoarxiv",
-    "group": "live"
+    "group": "live",
+    "row": 1,
+    "w": 84
   },
   {
     "id": "followers",
     "label": "followers",
     "live_key": "followers",
     "url": "https://github.com/wjgoarxiv?tab=followers",
-    "group": "live"
+    "group": "live",
+    "row": 1,
+    "w": 108
   },
   {
     "id": "release",
     "label": "release",
     "live_key": "release",
     "url": "https://github.com/wjgoarxiv/litfamily/releases",
-    "group": "live"
+    "group": "live",
+    "row": 1,
+    "w": 232
   },
   {
     "id": "phd",
     "label": "Ph.D.",
     "value": "UNIST 2023",
     "url": "https://scholar.google.com/citations?user=V95iNggAAAAJ",
-    "group": "id"
+    "group": "id",
+    "row": 1,
+    "w": 130
   },
   {
     "id": "research",
     "label": "research",
     "value": "Gas Hydrate · Flow Assurance",
     "url": "https://scholar.google.com/citations?user=V95iNggAAAAJ",
-    "group": "id"
+    "group": "id",
+    "row": 1,
+    "w": 292
   },
   {
     "id": "homepage",
     "label": "homepage",
     "value": "woojingo.notion.site",
     "url": "https://woojingo.notion.site",
-    "group": "link"
+    "group": "link",
+    "row": 2,
+    "w": 103
   },
   {
     "id": "scholar",
     "label": "scholar",
     "value": "Woojin Go",
     "url": "https://scholar.google.com/citations?user=V95iNggAAAAJ",
-    "group": "link"
+    "group": "link",
+    "row": 2,
+    "w": 96
   },
   {
     "id": "orcid",
     "label": "orcid",
     "value": "0000-0003-4021-8621",
     "url": "https://orcid.org/0000-0003-4021-8621",
-    "group": "link"
+    "group": "link",
+    "row": 2,
+    "w": 83
   },
   {
     "id": "linkedin",
     "label": "linkedin",
     "value": "woojingo",
     "url": "https://www.linkedin.com/in/woojingo/",
-    "group": "link"
+    "group": "link",
+    "row": 2,
+    "w": 103
   },
   {
     "id": "pypi",
     "label": "pypi",
     "value": "wjgo",
     "url": "https://pypi.org/user/wjgo/",
-    "group": "link"
+    "group": "link",
+    "row": 2,
+    "w": 76
   },
   {
     "id": "researchgate",
     "label": "researchgate",
     "value": "Woojin-Go",
     "url": "https://www.researchgate.net/profile/Woojin-Go",
-    "group": "link"
+    "group": "link",
+    "row": 2,
+    "w": 129
   },
   {
     "id": "mail",
     "label": "mail",
     "value": "woo_go@yahoo.com",
     "url": "mailto:woo_go@yahoo.com",
-    "group": "link"
+    "group": "link",
+    "row": 2,
+    "w": 76
   },
   {
     "id": "coffee",
-    "label": "coffee",
+    "label": "buy me a coffee",
     "value": "buy me one",
     "url": "https://www.buymeacoffee.com/woojingo",
-    "group": "link"
+    "group": "link",
+    "style": "cta",
+    "row": 2,
+    "w": 180
   }
 ]

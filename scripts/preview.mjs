@@ -15,18 +15,25 @@ body.dark { background: #0d1117; color: #e6edf3; }
 body.light { background: #ffffff; color: #1f2328; }
 .markdown-body {
   box-sizing: border-box;
-  width: min(838px, 100%);
+  width: min(846px, 100%);
   margin: 24px auto;
-  padding: 0 16px 48px;
+  padding: 0 0 48px;
   font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
 }
+.markdown-body p { margin-top: 0; margin-bottom: 16px; }
 themed-picture, .markdown-body picture { display: contents; }
 markdown-accessiblity-table { display: block; }
 .markdown-body img, .markdown-body svg { max-width: 100%; height: auto; }
-.markdown-body img[width="32%"] { width: 32%; }
-.markdown-body img[width="49%"] { width: 49%; }
+.markdown-body img[width="33.33%"] { width: 33.33%; vertical-align: top; }
+.markdown-body img[width="50%"] { width: 50%; vertical-align: top; }
 .markdown-body img[width="100%"] { width: 100%; }
-.markdown-body svg.lab-inline { width: 49%; height: auto; }
+.markdown-body svg.lab-inline { width: 50%; height: auto; }
+.markdown-body p:has(img[width="50%"]),
+.markdown-body p:has(img[width="33.33%"]) { display: flex; flex-wrap: nowrap; gap: 0; }
+.markdown-body p:has(img[width="50%"]) a,
+.markdown-body p:has(img[width="33.33%"]) a { flex: 1 1 0; min-width: 0; }
+.markdown-body p:has(img[width="50%"]) img,
+.markdown-body p:has(img[width="33.33%"]) img { width: 100%; }
 .markdown-body table { border-collapse: collapse; width: 100%; }
 .markdown-body th, .markdown-body td { border: 1px solid #30363d; padding: 6px 13px; text-align: left; vertical-align: top; }
 body.light .markdown-body th, body.light .markdown-body td { border-color: #d1d9e0; }
