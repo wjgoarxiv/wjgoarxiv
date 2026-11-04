@@ -211,23 +211,18 @@ def test_card_group_without_row_spec_raises():
         card_slots([{"group": "other", "name": "x"}])
 
 
-def test_licence_in_footer():
+def test_footer_has_no_licence_line():
     text = README.read_text(encoding="utf-8")
-    assert "<p>Outlined glyphs" not in text
-    anchor = re.search(
-        r'<a href="LICENSES/">\s*<picture>.*?footer-night\.svg.*?</picture>\s*</a>',
-        text,
-        re.DOTALL,
-    )
-    assert anchor
-    assert 'width="100%"' in anchor.group(0)
+    assert "Outlined glyphs" not in text
+    assert 'href="LICENSES/"' not in text
+    assert (ROOT / "LICENSES" / "Pretendard-OFL.txt").is_file()
     atlas = json.loads((ROOT / "assets" / "atlas" / "glyphs.json").read_text(encoding="utf-8"))
     capital_o = atlas["faces"]["meslo-regular"]["glyphs"]["O"]["d"]
     for theme in ("night", "day"):
         svg = (ROOT / "assets" / f"footer-{theme}.svg").read_text(encoding="utf-8")
         assert "<text" not in svg.lower()
-        assert 'width="560"' in svg and 'height="52"' in svg
-        assert capital_o in svg
+        assert 'width="280"' in svg and 'height="28"' in svg
+        assert capital_o not in svg
 
 
 def test_shields_in_a_copy_fails(tmp_path):

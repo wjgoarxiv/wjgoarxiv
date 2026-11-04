@@ -87,5 +87,5 @@
 </details>
 
 <p align="center">
-<a href="LICENSES/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/footer-night.svg"><source media="(prefers-color-scheme: light)" srcset="assets/footer-day.svg"><img src="assets/footer-night.svg" alt="~/woojin-go" width="100%"></picture></a>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/footer-night.svg"><source media="(prefers-color-scheme: light)" srcset="assets/footer-day.svg"><img src="assets/footer-night.svg" alt="~/woojin-go"></picture>
 </p>
