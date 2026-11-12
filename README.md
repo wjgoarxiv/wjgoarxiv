@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+<a href="https://woojingo.vercel.app/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/scene-night.svg"><source media="(prefers-color-scheme: light)" srcset="assets/scene-day.svg"><img src="assets/scene-night.svg" alt="Three acts: water molecules lock into sI hydrate cages that trap CO2, a waveform at 128 BPM locks to its beats and every frame passes the flash check, and seven LitFamily agents run one lit prompt, pass their checks and write a handoff note" width="100%"></picture></a>
+</p>
+
+<p align="center">
 <a href="https://scholar.google.com/citations?user=V95iNggAAAAJ"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/lab-night.svg"><source media="(prefers-color-scheme: light)" srcset="assets/lab-day.svg"><img src="assets/lab-night.svg" alt="LAB: gas hydrate research, flow assurance, CO2 hydrate, cage analysis, Ph.D. UNIST 2023" width="50%"></picture></a><a href="https://github.com/wjgoarxiv/litfamily"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/workshop-night.svg"><source media="(prefers-color-scheme: light)" srcset="assets/workshop-day.svg"><img src="assets/workshop-night.svg" alt="WORKSHOP: LitFamily agents, science MCP tools, and the dev environment" width="50%"></picture></a>
 </p>
 

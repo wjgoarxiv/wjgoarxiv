@@ -248,3 +248,19 @@ def test_shields_in_a_copy_fails(tmp_path):
     except AssertionError:
         return
     raise AssertionError("shields host was accepted")
+
+
+def test_scene_row_sits_between_badges_and_panes():
+    text = README.read_text(encoding="utf-8")
+    blocks = re.findall(r"<p\b[^>]*>.*?</p>", text, re.DOTALL)
+    names = [
+        "badges" if "assets/badges/" in b else "scene" if "scene-night.svg" in b else "panes" if "lab-night.svg" in b else "other"
+        for b in blocks
+    ]
+    assert names.count("scene") == 1
+    i = names.index("scene")
+    assert names[i - 1] == "badges" and names[i + 1] == "panes"
+    scene = blocks[i]
+    assert 'srcset="assets/scene-day.svg"' in scene
+    assert 'href="https://woojingo.vercel.app/"' in scene
+    assert 'width="100%"' in scene
